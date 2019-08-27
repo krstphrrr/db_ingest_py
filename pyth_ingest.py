@@ -31,6 +31,8 @@ DROP TABLE IF EXISTS gisdb.public."dataHeight";
 DROP TABLE IF EXISTS gisdb.public."dataSpeciesInventory";
 DROP TABLE IF EXISTS gisdb.public."dataSoilStability";""")
 
+
+# Schema - header
 cur.execute("""
 DROP TABLE IF EXISTS gisdb.public."dataHeader";
 CREATE TABLE gisdb.public."dataHeader"(
@@ -53,10 +55,197 @@ CREATE TABLE gisdb.public."dataHeader"(
   "Elevation" NUMERIC,
   "PercentCoveredByEcoSite" NUMERIC);
 """)
-conn.commit()
-# Schema
-
-# populate
 with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
     cur.copy_expert("COPY gisdb.public.\"dataHeader\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+conn.commit()
+
+# schema - gap
+
+cur.execute("""
+DROP TABLE IF EXISTS gisdb.public."dataGap";
+CREATE TABLE gisdb.public."dataGap"(
+  "LineKey" VARCHAR(100),
+  "RecKey" VARCHAR(100),
+  "DateModified" DATE,
+  "FormType" TEXT,
+  "FormDate" DATE,
+  "Observer" TEXT,
+  "Recorder" TEXT,
+  "DataEntry" TEXT,
+  "DataErrorChecking" TEXT,
+  "Direction"NUMERIC,
+  "Measure" INT,
+  "LineLengthAmount" NUMERIC,
+  "GapMin" NUMERIC,
+  "GapData" INT,
+  "PerennialsCanopy" INT,
+  "AnnualGrassesCanopy" INT,
+  "AnnualForbsCanopy" INT,
+  "OtherCanopy" INT,
+  "Notes" TEXT,
+  "NoCanopyGaps" INT,
+  "NoBasalGaps" INT,
+  "DateLoadedInDb" DATE,
+  "PerennialsBasal" INT,
+  "AnnualGrassesBasal" INT,
+  "AnnualForbsBasal" INT,
+  "OtherBasal" INT,
+  "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+  "DBKey" TEXT,
+  "SeqNo" TEXT,
+  "RecType" TEXT,
+  "GapStart" NUMERIC,
+  "GapEnd" NUMERIC,
+  "Gap" NUMERIC,
+  "Source" TEXT);
+""")
+with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/gap_subs.csv','r') as f:
+    cur.copy_expert("COPY gisdb.public.\"dataGap\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+conn.commit()
+
+# schema -  lpi
+
+cur.execute("""
+DROP TABLE IF EXISTS gisdb.public."dataLPI";
+CREATE TABLE gisdb.public."dataLPI"(
+  "LineKey" VARCHAR(100),
+  "RecKey" VARCHAR(100),
+  "DateModified" DATE,
+  "FormType" TEXT,
+  "FormDate" DATE,
+  "Observer" TEXT,
+  "Recorder" TEXT,
+  "DataEntry" TEXT,
+  "DataErrorChecking" TEXT,
+  "Direction" VARCHAR(50),
+  "Measure" INT,
+  "LineLengthAmount" NUMERIC,
+  "SpacingIntervalAmount" NUMERIC,
+  "SpacingType" TEXT,
+  "HeightOption" TEXT,
+  "HeightUOM" TEXT,
+  "ShowCheckbox" INT,
+  "CheckboxLabel" TEXT,
+  "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+  "DBKey" TEXT,
+  "PointLoc" NUMERIC,
+  "PointNbr" INT,
+  "ShrubShape" TEXT,
+  "layer" TEXT,
+  "code" TEXT,
+  "chckbox" INT,
+  "Source" TEXT);
+""")
+with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/lpi_subs.csv','r') as f:
+    cur.copy_expert("COPY gisdb.public.\"dataLPI\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+cur.execute("ALTER TABLE gisdb.public.\"dataLPI\" DROP COLUMN \"HeightOption\", DROP COLUMN \"HeightUOM\", DROP COLUMN \"ShowCheckbox\";")
+conn.commit()
+conn.commit()
+
+# schema - height
+
+cur.execute("""
+DROP TABLE IF EXISTS gisdb.public."dataHeight";
+CREATE TABLE gisdb.public."dataHeight"(
+  "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+  "DBKey" TEXT,
+  "PointLoc" NUMERIC,
+  "PointNbr" INT,
+  "RecKey" VARCHAR(100),
+  "Height" NUMERIC,
+  "Species" TEXT,
+  "Chkbox" INT,
+  "type" TEXT,
+  "GrowthHabit_measured" TEXT,
+  "LineKey" VARCHAR(100),
+  "DateModified" DATE,
+  "FormType" TEXT,
+  "FormDate" DATE,
+  "Observer" TEXT,
+  "Recorder" TEXT,
+  "DataEntry" TEXT,
+  "DataErrorChecking" TEXT,
+  "Direction" VARCHAR(100),
+  "Measure" INT,
+  "LineLengthAmount" NUMERIC,
+  "SpacingIntervalAmount" NUMERIC,
+  "SpacingType" TEXT,
+  "HeightOption" TEXT,
+  "HeightUOM" TEXT,
+  "ShowCheckbox" INT,
+  "CheckboxLabel" TEXT,
+  "Source" TEXT,
+  "UOM" TEXT)
+""")
+with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/height_subs.csv','r') as f:
+    cur.copy_expert("COPY gisdb.public.\"dataHeight\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+cur.execute("ALTER TABLE gisdb.public.\"dataHeight\" DROP COLUMN \"SpacingIntervalAmount\", DROP COLUMN \"SpacingType\", DROP COLUMN \"ShowCheckbox\", DROP COLUMN \"UOM\";")
+conn.commit()
+
+# schema - soil stability
+
+cur.execute("""
+DROP TABLE IF EXISTS gisdb.public."dataSoilStability";
+CREATE TABLE gisdb.public."dataSoilStability"(
+  "PlotKey" VARCHAR(100),
+  "RecKey" VARCHAR(100),
+  "DateModified" DATE,
+  "FormType" TEXT,
+  "FormDate" DATE,
+  "LineKey" VARCHAR(100),
+  "Observer" TEXT,
+  "Recorder" TEXT,
+  "DataEntry" TEXT,
+  "DataErrorChecking" TEXT,
+  "SoilStabSubSurface" INT,
+  "Notes" TEXT,
+  "DateLoadedInDb" DATE,
+  "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+  "DBKey" TEXT,
+  "Position" INT,
+  "Line" VARCHAR(50),
+  "Pos" VARCHAR(50),
+  "Veg" TEXT,
+  "Rating" INT,
+  "Hydro" INT,
+  "Source" TEXT);
+""")
+with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/soil_subs.csv','r') as f:
+    cur.copy_expert("COPY gisdb.public.\"dataSoilStability\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+cur.execute("ALTER TABLE gisdb.public.\"dataSoilStability\" DROP COLUMN \"FormType\";")
+conn.commit()
+
+# schema - species inventory
+
+cur.execute("""
+DROP TABLE IF EXISTS gisdb.public."dataSpeciesInventory";
+CREATE TABLE gisdb.public."dataSpeciesInventory"(
+  "LineKey" VARCHAR(100),
+  "RecKey" VARCHAR(100),
+  "DateModified" DATE,
+  "FormType" TEXT,
+  "FormDate" DATE,
+  "Observer" TEXT,
+  "Recorder" TEXT,
+  "DataEntry" TEXT,
+  "DataErrorChecking" TEXT,
+  "SpecRichMethod" INT,
+  "SpecRichMeasure" INT,
+  "SpecRichNbrSubPlots" INT,
+  "SpecRich1Container" INT,
+  "SpecRich1Shape" INT,
+  "SpecRich1Dim1" NUMERIC,
+  "SpecRich1Dim2" NUMERIC,
+  "SpecRich1Area" NUMERIC,
+  "Notes" TEXT,
+  "DateLoadedInDb" DATE,
+  "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+  "DBKey" TEXT,
+  "Species" TEXT,
+  "Source" TEXT,
+  "Density" INT);
+""")
+with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/spp_subs.csv','r') as f:
+    cur.copy_expert("COPY gisdb.public.\"dataSpeciesInventory\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+cur.execute("ALTER TABLE gisdb.public.\"dataSpeciesInventory\" DROP COLUMN \"FormType\";")
 conn.commit()
