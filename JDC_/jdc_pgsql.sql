@@ -198,7 +198,7 @@ CREATE TABLE gisdb.public."dataHeight"(
   "DataEntry" TEXT,
   "DataErrorChecking" TEXT,
   "Direction" VARCHAR(100),
-  "Measure" INT, 
+  "Measure" INT,
   "LineLengthAmount" NUMERIC,
   --"SpacingIntervalAmount" NUMERIC, --dropped
   --"SpacingType" TEXT,  -- dropped
