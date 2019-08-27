@@ -10,8 +10,13 @@ db_password = os.environ.get('DB_PASS')
 db_host = os.environ.get('DB_HOST')
 
 # table ingestion from csv, null values are 'NA'
+# still requires table schema
 
-conn = psycopg2.connect(dbname="postgres", user=db_user, password=db_password, port="5432", host=db_host)
+conn = psycopg2.connect(dbname="postgres",
+                        user=db_user,
+                        password=db_password,
+                        port="5432",
+                        host=db_host)
 cur = conn.cursor()
 cur.execute("ALTER TABLE header_tall DROP CONSTRAINT IF EXISTS header_tall_pkey CASCADE")
 with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
