@@ -3,8 +3,7 @@ import pandas as pd
 import csv
 import os
 import gdaltools
-
-
+import gdal
 
 # reading up env. variables
 
@@ -249,3 +248,19 @@ with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/spp_su
     cur.copy_expert("COPY gisdb.public.\"dataSpeciesInventory\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
 cur.execute("ALTER TABLE gisdb.public.\"dataSpeciesInventory\" DROP COLUMN \"FormType\";")
 conn.commit()
+
+
+ogr2ogr -f "PostgreSQL" -a_srs "EPSG:4326" PG:"dbname=* user=* password=* host=* port=*" "source_data.json" -nln "source_data"
+
+ogr = gdaltools.ogr2ogr()
+ogr.set_encoding("UTF-8")
+ogr.set_input("C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/species_geojson.geojson")
+# requires gdal / osgeow4
+gdaltools.Wrapper.BASEPATH = os.environ.get('GDAL_PATH')
+ogr.geom_type = 'POINT'
+con = gdaltools.PgConnectionString(host=db_host, port=5432, dbname="gisdb", schema="public", user=db_user, password=db_password)
+ogr.set_output(con, table_name="geo_Spe", srs="EPSG:4326")
+
+ogr.execute()
+
+cur.execute('ALTER TABLE gisdb.public."geo_Spe" ADD CONSTRAINT geo_spe_fk FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
