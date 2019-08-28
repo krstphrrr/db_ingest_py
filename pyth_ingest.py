@@ -250,17 +250,66 @@ cur.execute("ALTER TABLE gisdb.public.\"dataSpeciesInventory\" DROP COLUMN \"For
 conn.commit()
 
 
-ogr2ogr -f "PostgreSQL" -a_srs "EPSG:4326" PG:"dbname=* user=* password=* host=* port=*" "source_data.json" -nln "source_data"
+# indicator tables w geometry - species table
+conn.commit()
+cur.execute("DROP TABLE IF EXISTS gisdb.public.\"geo_spe\";")
+path = "C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/"
+
+gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
 
 ogr = gdaltools.ogr2ogr()
 ogr.set_encoding("UTF-8")
-ogr.set_input("C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/species_geojson.geojson")
-# requires gdal / osgeow4
-gdaltools.Wrapper.BASEPATH = os.environ.get('GDAL_PATH')
+# file input - geojson
+ogr.set_input(os.path.join(path,'species_geojson.geojson'),srs="EPSG:4326")
+
 ogr.geom_type = 'POINT'
 con = gdaltools.PgConnectionString(host=db_host, port=5432, dbname="gisdb", schema="public", user=db_user, password=db_password)
-ogr.set_output(con, table_name="geo_Spe", srs="EPSG:4326")
-
+# file output - postgis table
+ogr.set_output(con, table_name="geo_Spe")
 ogr.execute()
 
-cur.execute('ALTER TABLE gisdb.public."geo_Spe" ADD CONSTRAINT geo_spe_fk FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
+# fixing column names in postgis table
+import geopandas as gpd
+fname=os.path.join(path,'species_geojson.geojson')
+df1 = gpd.read_file(fname)
+list(df1.columns)
+
+# function to change a column name to another (to fix name cases)
+def name_q(table_name,which_column,newname):
+    from psycopg2 import sql
+    con1 = psycopg2.connect(dbname="gisdb", user=db_user, password=db_password,
+                            port="5432", host=db_host)
+    cur1 = con1.cursor()
+    table = f'"{table_name}"'
+    cur1.execute(
+        sql.SQL("ALTER TABLE gisdb.public.{0} RENAME COLUMN {1} TO {2}").format(sql.Identifier(table_name),
+        sql.Identifier(which_column),
+        sql.Identifier(newname)))
+    con1.commit()
+
+name_q("geo_spe",df1.columns.tolist()[13].lower(),df1.columns.tolist()[13].capitalize())
+# loop to find lowercase string and capitalize first lt
+# sputters, stops at 5 and 13
+for col in range(14,18):
+    name_q("geo_spe",df1.columns.tolist()[col].lower(),df1.columns.tolist()[col])
+
+# relating species indicator table to header
+cur.execute('ALTER TABLE gisdb.public."geo_spe" ADD CONSTRAINT geo_spe_fk FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
+conn.commit()
+
+cur.execute("DROP TABLE IF EXISTS gisdb.public.\"geo_spe\";")
+
+# indicator tables w geometry - ind table
+cur.execute("DROP TABLE IF EXISTS gisdb.public.\"geo_ind\";")
+gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
+
+ogr = gdaltools.ogr2ogr()
+ogr.set_encoding("UTF-8")
+# file input - geojson
+ogr.set_input(os.path.join(path,'indicators_geojson.geojson'),srs="EPSG:4326")
+
+ogr.geom_type = 'POINT'
+con = gdaltools.PgConnectionString(host=db_host, port=5432, dbname="gisdb", schema="public", user=db_user, password=db_password)
+# file output - postgis table
+ogr.set_output(con, table_name="geo_Ind")
+ogr.execute()
