@@ -4,6 +4,7 @@ import csv
 import os
 import gdaltools
 import gdal
+import geopandas as gpd
 
 # reading up env. variables
 
@@ -269,7 +270,6 @@ ogr.set_output(con, table_name="geo_Spe")
 ogr.execute()
 
 # fixing column names in postgis table
-import geopandas as gpd
 fname=os.path.join(path,'species_geojson.geojson')
 df1 = gpd.read_file(fname)
 list(df1.columns)
@@ -280,7 +280,7 @@ def name_q(table_name,which_column,newname):
     con1 = psycopg2.connect(dbname="gisdb", user=db_user, password=db_password,
                             port="5432", host=db_host)
     cur1 = con1.cursor()
-    table = f'"{table_name}"'
+    # could be better if arguments could skip 'wrong' colnames
     cur1.execute(
         sql.SQL("ALTER TABLE gisdb.public.{0} RENAME COLUMN {1} TO {2}").format(sql.Identifier(table_name),
         sql.Identifier(which_column),
@@ -289,22 +289,23 @@ def name_q(table_name,which_column,newname):
 
 name_q("geo_spe",df1.columns.tolist()[13].lower(),df1.columns.tolist()[13].capitalize())
 # loop to find lowercase string and capitalize first lt
-# sputters, stops at 5 and 13
-for col in range(14,18):
-    name_q("geo_spe",df1.columns.tolist()[col].lower(),df1.columns.tolist()[col])
+for col in df1.columns:
+    name_q("geo_spe",
+    col.lower(),
+    col.capitalize())
 
 # relating species indicator table to header
 cur.execute('ALTER TABLE gisdb.public."geo_spe" ADD CONSTRAINT geo_spe_fk FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
 conn.commit()
 
-cur.execute("DROP TABLE IF EXISTS gisdb.public.\"geo_spe\";")
+
 
 # indicator tables w geometry - ind table
 cur.execute("DROP TABLE IF EXISTS gisdb.public.\"geo_ind\";")
 gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
-
 ogr = gdaltools.ogr2ogr()
 ogr.set_encoding("UTF-8")
+
 # file input - geojson
 ogr.set_input(os.path.join(path,'indicators_geojson.geojson'),srs="EPSG:4326")
 
@@ -313,3 +314,21 @@ con = gdaltools.PgConnectionString(host=db_host, port=5432, dbname="gisdb", sche
 # file output - postgis table
 ogr.set_output(con, table_name="geo_Ind")
 ogr.execute()
+
+fname2=os.path.join(path,'indicators_geojson.geojson')
+df2 = gpd.read_file(fname2)
+list(df2.columns)
+#name_q("geo_ind",df2.columns.tolist()[0].lower(),df2.columns.tolist()[13].capitalize())
+
+for col in df2.columns:
+    name_q("geo_ind",
+    col.lower(),
+    col.capitalize())
+df2[df2['source']!='TerrADat']
+# check colnames
+cur.execute("""
+SELECT attname
+FROM pg_attribute
+WHERE attrelid = 'geo_ind'::regclass
+""")
+cur.fetchall()
