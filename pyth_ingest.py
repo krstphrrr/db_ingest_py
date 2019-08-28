@@ -324,7 +324,7 @@ for col in df2.columns:
     name_q("geo_ind",
     col.lower(),
     col.capitalize())
-df2[df2['source']!='TerrADat']
+
 # check colnames
 cur.execute("""
 SELECT attname
