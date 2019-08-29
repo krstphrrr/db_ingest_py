@@ -332,3 +332,40 @@ FROM pg_attribute
 WHERE attrelid = 'geo_ind'::regclass
 """)
 cur.fetchall()
+
+# @contextmanager
+# def getcursor():
+#     con=connectionpool.getconn()
+#     try:
+#         yield con.cursor()
+#     finally:
+#         connectionpool.putconn(con)
+# def main_work():
+#     try:
+#         with getcursor() as cur:
+#             cur.execute("SELECT * FROM ")
+#
+
+cur = conn.cursor()
+from psycopg2.extensions import AsIs
+cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name")
+# table_names = cur.fetchall()
+# for name in table_names:
+#     print(name)
+for table in cur.fetchall():
+    table = table[0]
+    cur.execute("SELECT * FROM %s LIMIT 0", [AsIs(table)])
+    print(cur.description, "\n")
+
+# testing out table_name interpolation
+
+def tbl_name(tname):
+    from psycopg2 import sql
+    from psycopg2.extensions import AsIs
+    con1 = psycopg2.connect(dbname="gisdb", user=db_user, password=db_password,
+                            port="5432", host=db_host)
+    cur1 = con1.cursor()
+    cur1.execute(
+        cur.mogrify("SELECT * FROM %s",['AsIs(tname)]))
+
+    con1.commit()
