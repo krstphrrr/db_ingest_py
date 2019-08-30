@@ -369,3 +369,101 @@ def tbl_name(tname):
         cur.mogrify("SELECT * FROM %s",['AsIs(tname)]))
 
     con1.commit()
+
+
+
+import sys
+sys.version_info
+
+class NewList():
+    """
+    A Python list with some extras!
+    """
+    def __init__(self, initial_state):
+        self.data = initial_state
+        self.calc_item()
+
+    def calc_item(self):
+        """
+        Helper function
+        """
+        length = 0
+        for item in self.data:
+            length += 1
+        self.length = length
+
+    def append(self, new_item):
+        """
+        Append `new_item` to the NewList
+        """
+        self.data = self.data + [new_item]
+        self.calc_item()
+
+my_list = NewList([1,2,3,4,5])
+my_list.length
+
+my_list.append(6)
+print(my_list.data)
+my_list.length
+
+class Player():
+    # The special __init__ function runs whenever a class is instantiated
+    # The init function can take arguments, but self is always the first one
+    # Self is just a reference to the instance of the class
+    # It is automatically passed in when you instantiate an instance of the class
+    def __init__(self, data_row):
+        self.player_name = data_row[0]
+        self.position = data_row[1]
+        self.age = data_row[2]
+        self.team = data_row[3]
+
+# Initialize a player using the first row of our data set
+# first_player = Player(nba[0])
+import math
+math.fsum([1,2,3,4,5])
+# Implement the Team class
+class Team():
+    def __init__(self,team_name):
+        self.team_name = team_name
+###
+conn
+cur = conn.cursor()
+cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
+for table in cur.fetchall():
+    table = table[0]
+    cur.execute("SELECT * FROM %s LIMIT 0", [AsIs(table)])
+    print(cur.description,"\n")
+
+
+conn.commit()
+
+
+cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
+# table_names = cur.fetchall()
+for name in cur.fetchall():
+    cur.execute("SELECT * FROM %s", [AsIs(name)])
+    print(cur.description)
+cur.execute("SELECT * FROM gisdb.public.\"dataGap\"")
+print(cur.description)
+
+cur.execute("SELECT oid, typname FROM pg_catalog.pg_type")
+type_mappings = {
+    int(oid): typname
+    for oid, typname in cur.fetchall()
+}
+
+readable_desc ={}
+for table in table_names:
+    cur.execute("SELECT * FROM %s LIMIT 100", [AsIs(table)])
+    readable_description[table] = dict(
+        columns=[dict(name=col.name,
+                      type=type_mappings[col.type_code],
+                      length=col.internal_size)
+            for col in cur.description],
+        total = cur.execute("SELECT COUNT(*) FROM %s LIMIT 0", [AsIs(table)])
+    )
+
+print(readable_description)
+
+cur.execute('EXPLAIN SELECT * FROM gisdb.public."dataGap" LIMIT 10')
+cur.fetchall()
