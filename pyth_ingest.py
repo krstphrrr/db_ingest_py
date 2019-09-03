@@ -14,6 +14,8 @@ db_host = os.environ.get('DB_HOST')
 
 # table ingestion from csv, null values are 'NA'
 # still requires table schema
+from db_init import dbinit
+
 
 conn = psycopg2.connect(dbname="gisdb",
                         user=db_user,
@@ -22,6 +24,70 @@ conn = psycopg2.connect(dbname="gisdb",
                         host=db_host)
 cur = conn.cursor()
 
+
+
+class mydb_2(object):
+    _instance = None
+##  magic methods : allow arguments to be used with the 'with' statement
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.commit()
+        self.connection.close()
+##
+    def __new__(cls):
+
+        if cls._instance is None:
+            cls._instance = object.__new__(cls)
+
+            db_config = {'dbname': 'gisdb', 'host': os.environ.get('DB_HOST'),
+                     'password': os.environ.get('DB_PASS'), 'port': 5432, 'user': os.environ.get('DB_USER')}
+            try:
+                print('connecting to PostgreSQL database...')
+                connection = mydb_2._instance.connection = psycopg2.connect(**db_config)
+                cursor = mydb_2._instance.cursor = connection.cursor()
+                cursor.execute('SELECT VERSION()')
+                db_version = cursor.fetchone()
+
+            except Exception as error:
+                print('Error: connection not established {}'.format(error))
+                mydb_2._instance = None
+
+            else:
+                print('connection established\n{}'.format(db_version[0]))
+
+        return cls._instance
+
+    def __init__(self):
+        self.connection = self._instance.connection
+        self.cursor = self._instance.cursor
+
+    def query(query, params=None,*,self):
+        try:
+            result = self.cursor.execute(query,*params)
+
+
+        except Exception as error:
+            print('error execting query "{}", error: {}'.format(query, error))
+            return None
+        else:
+            return result
+
+
+    def __del__(self):
+        self.connection.close()
+        self.cursor.close()
+
+# test query
+q = "SELECT {col} FROM gisdb.public.{table}"
+
+# instantiation
+q1 = mydb_2()
+
+q1.query(q,'PrimaryKey','gisdb.public.\"dataHeader\"')
+q1.query(q).fetchall()
+
 # header table: drop constraints > drop table > create schema > populate
 cur.execute("""
 ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS header_tall_pkey CASCADE;
@@ -29,7 +95,52 @@ DROP TABLE IF EXISTS gisdb.public."dataHeader";
 DROP TABLE IF EXISTS gisdb.public."dataGap";
 DROP TABLE IF EXISTS gisdb.public."dataHeight";
 DROP TABLE IF EXISTS gisdb.public."dataSpeciesInventory";
-DROP TABLE IF EXISTS gisdb.public."dataSoilStability";""")
+DROP TABLE IF EXISTS gisdb.public."dataSoilStability";
+""")
+
+with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
+    cur.copy_expert("COPY gisdb.public.\"dataHeader\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+
+conn.commit()
+cur.execute("""
+DROP TABLE IF EXISTS gisdb.public."dataGap";
+CREATE TABLE gisdb.public."dataGap"(
+  "LineKey" VARCHAR(100),
+  "RecKey" VARCHAR(100),
+  "DateModified" DATE,
+  "FormType" TEXT,
+  "FormDate" DATE,
+  "Observer" TEXT,
+  "Recorder" TEXT,
+  "DataEntry" TEXT,
+  "DataErrorChecking" TEXT,
+  "Direction"NUMERIC,
+  "Measure" INT,
+  "LineLengthAmount" NUMERIC,
+  "GapMin" NUMERIC,
+  "GapData" INT,
+  "PerennialsCanopy" INT,
+  "AnnualGrassesCanopy" INT,
+  "AnnualForbsCanopy" INT,
+  "OtherCanopy" INT,
+  "Notes" TEXT,
+  "NoCanopyGaps" INT,
+  "NoBasalGaps" INT,
+  "DateLoadedInDb" DATE,
+  "PerennialsBasal" INT,
+  "AnnualGrassesBasal" INT,
+  "AnnualForbsBasal" INT,
+  "OtherBasal" INT,
+  "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+  "DBKey" TEXT,
+  "SeqNo" TEXT,
+  "RecType" TEXT,
+  "GapStart" NUMERIC,
+  "GapEnd" NUMERIC,
+  "Gap" NUMERIC,
+  "Source" TEXT);
+""")
+
 
 
 # Schema - header
@@ -375,56 +486,6 @@ def tbl_name(tname):
 import sys
 sys.version_info
 
-class NewList():
-    """
-    A Python list with some extras!
-    """
-    def __init__(self, initial_state):
-        self.data = initial_state
-        self.calc_item()
-
-    def calc_item(self):
-        """
-        Helper function
-        """
-        length = 0
-        for item in self.data:
-            length += 1
-        self.length = length
-
-    def append(self, new_item):
-        """
-        Append `new_item` to the NewList
-        """
-        self.data = self.data + [new_item]
-        self.calc_item()
-
-my_list = NewList([1,2,3,4,5])
-my_list.length
-
-my_list.append(6)
-print(my_list.data)
-my_list.length
-
-class Player():
-    # The special __init__ function runs whenever a class is instantiated
-    # The init function can take arguments, but self is always the first one
-    # Self is just a reference to the instance of the class
-    # It is automatically passed in when you instantiate an instance of the class
-    def __init__(self, data_row):
-        self.player_name = data_row[0]
-        self.position = data_row[1]
-        self.age = data_row[2]
-        self.team = data_row[3]
-
-# Initialize a player using the first row of our data set
-# first_player = Player(nba[0])
-import math
-math.fsum([1,2,3,4,5])
-# Implement the Team class
-class Team():
-    def __init__(self,team_name):
-        self.team_name = team_name
 ###
 conn
 cur = conn.cursor()
