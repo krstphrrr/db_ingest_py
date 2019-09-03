@@ -89,6 +89,8 @@ q1.query(q,'PrimaryKey','gisdb.public.\"dataHeader\"')
 q1.query(q).fetchall()
 
 # header table: drop constraints > drop table > create schema > populate
+conn.commit()
+cur.execute('ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS header_tall_pkey CASCADE;')
 cur.execute("""
 ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS header_tall_pkey CASCADE;
 DROP TABLE IF EXISTS gisdb.public."dataHeader";
@@ -100,6 +102,8 @@ DROP TABLE IF EXISTS gisdb.public."dataSoilStability";
 
 with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
     cur.copy_expert("COPY gisdb.public.\"dataHeader\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+
+
 
 conn.commit()
 cur.execute("""
