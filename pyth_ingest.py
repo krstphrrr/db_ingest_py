@@ -86,13 +86,44 @@ q = "SELECT {col} FROM gisdb.public.{table}"
 q1 = mydb_2()
 
 q1.query(q,'PrimaryKey','gisdb.public.\"dataHeader\"')
-q1.query(q).fetchall()
+q1.query(q)
 
 # header table: drop constraints > drop table > create schema > populate
 conn.commit()
-cur.execute('ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS header_tall_pkey CASCADE;')
+cur.execute('ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS dataHeader_pkey CASCADE;')
+
+table_list = cur.fetchall()
+import re
+t_list = []
+###########################
+for tab in table_list:
+    #regex101.com
+    t_list.append(re.search(r"\(\'(.*?)\'\,\)",str(tab)).group(1))
+# with t_list full, one could execute an alter table with each
+
+def drop_fk(fk_tbl):
+    from psycopg2 import sql
+    con1 = psycopg2.connect(dbname="gisdb", user=db_user, password=db_password,
+                            port="5432", host=db_host)
+
+    # need to define a variable that concatenates with FK names,
+    # then add both(tablename, fk name) to alter/drop statement
+    cur.execute(
+    sql.SQL('ALTER * FROM gisdb.public.{0}').format(sql.Identifier(str(col)) )
+    )
+
+for col in t_list:
+###########################
+cur.fetchone()
+cur.execute('SELECT * FROM gisdb.public."geo_ind" LIMIT 10')
+
+cur.execute("SELECT TOP FROM information_schema.table_constraints WHERE CONSTRAINT_TYPE = 'FOREIGN KEY'")
+
+
+
+
 cur.execute("""
-ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS header_tall_pkey CASCADE;
+ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS dataHeader_pkey CASCADE;
 DROP TABLE IF EXISTS gisdb.public."dataHeader";
 DROP TABLE IF EXISTS gisdb.public."dataGap";
 DROP TABLE IF EXISTS gisdb.public."dataHeight";
@@ -106,46 +137,6 @@ with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r'
 
 
 conn.commit()
-cur.execute("""
-DROP TABLE IF EXISTS gisdb.public."dataGap";
-CREATE TABLE gisdb.public."dataGap"(
-  "LineKey" VARCHAR(100),
-  "RecKey" VARCHAR(100),
-  "DateModified" DATE,
-  "FormType" TEXT,
-  "FormDate" DATE,
-  "Observer" TEXT,
-  "Recorder" TEXT,
-  "DataEntry" TEXT,
-  "DataErrorChecking" TEXT,
-  "Direction"NUMERIC,
-  "Measure" INT,
-  "LineLengthAmount" NUMERIC,
-  "GapMin" NUMERIC,
-  "GapData" INT,
-  "PerennialsCanopy" INT,
-  "AnnualGrassesCanopy" INT,
-  "AnnualForbsCanopy" INT,
-  "OtherCanopy" INT,
-  "Notes" TEXT,
-  "NoCanopyGaps" INT,
-  "NoBasalGaps" INT,
-  "DateLoadedInDb" DATE,
-  "PerennialsBasal" INT,
-  "AnnualGrassesBasal" INT,
-  "AnnualForbsBasal" INT,
-  "OtherBasal" INT,
-  "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
-  "DBKey" TEXT,
-  "SeqNo" TEXT,
-  "RecType" TEXT,
-  "GapStart" NUMERIC,
-  "GapEnd" NUMERIC,
-  "Gap" NUMERIC,
-  "Source" TEXT);
-""")
-
-
 
 # Schema - header
 cur.execute("""
@@ -494,9 +485,11 @@ sys.version_info
 conn
 cur = conn.cursor()
 cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
+cur.fetchall()
+
 for table in cur.fetchall():
     table = table[0]
-    cur.execute("SELECT * FROM %s LIMIT 0", [AsIs(table)])
+    cur.execute("SELECT * FROM gisdb.public.%s LIMIT 0", [AsIs(table)])
     print(cur.description,"\n")
 
 
@@ -505,6 +498,7 @@ conn.commit()
 
 cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
 # table_names = cur.fetchall()
+
 for name in cur.fetchall():
     cur.execute("SELECT * FROM %s", [AsIs(name)])
     print(cur.description)
