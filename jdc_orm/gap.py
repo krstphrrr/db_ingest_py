@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
+from sqlalchemy import Column, String, Date, Text, Numeric, Integer, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
 from base import Base
@@ -9,42 +9,43 @@ from base import Base
 class dataGap(Base):
     __tablename__='dataGap'
 
-    LineKey = Column(VARCHAR(100))
-    RecKey = Column(VARCHAR(100))
+    LineKey = Column(String)
+    RecKey = Column(String)
     DateModified = Column(Date)
-    FormType = Column(TEXT)
+    FormType = Column(Text)
     FormDate = Column(Date)
-    Observer = Column(TEXT)
-    Recorder = Column(TEXT)
-    DataEntry = Column(TEXT)
-    DataErrorChecking = Column(TEXT)
-    Direction = Column(NUMERIC)
-    Measure = Column(INT)
-    LineLengthAmount = Column(NUMERIC)
-    GapMin = Column(NUMERIC)
-    GapData = Column(INT)
-    PerennialsCanopy = Column(INT)
-    AnnualGrassesCanopy = Column(INT)
-    AnnualForbsCanopy = Column(INT)
-    OtherCanopy = Column(INT)
-    Notes = Column(TEXT)
-    NoCanopyGaps = Column(INT)
-    NoBasalGaps = Column(INT)
+    Observer = Column(Text)
+    Recorder = Column(Text)
+    DataEntry = Column(Text)
+    DataErrorChecking = Column(Text)
+    Direction = Column(Numeric)
+    Measure = Column(Integer)
+    LineLengthAmount = Column(Numeric)
+    GapMin = Column(Numeric)
+    GapData = Column(Integer)
+    PerennialsCanopy = Column(Integer)
+    AnnualGrassesCanopy = Column(Integer)
+    AnnualForbsCanopy = Column(Integer)
+    OtherCanopy = Column(Integer)
+    Notes = Column(Text)
+    NoCanopyGaps = Column(Integer)
+    NoBasalGaps = Column(Integer)
     DateLoadedInDb = Column(Date)
-    PerennialsBasal = Column(INT)
-    AnnualGrassesBasal = Column(INT)
-    AnnualForbsBasal = Column(INT)
-    OtherBasal = Column(INT)
-    PrimaryKey = Column(TEXT,ForeignKey('header.PrimaryKey'))
-    DBKey = Column(TEXT)
-    SeqNo = Column(TEXT)
-    RecType = Column(TEXT)
-    GapStart = Column(NUMERIC)
-    GapEnd = Column(NUMERIC)
-    Gap = Column(NUMERIC)
-    Source = Column(TEXT)
-    gap_header = relationship("dataHeader", backref = backref("dataGap", uselist=False))
+    PerennialsBasal = Column(Integer)
+    AnnualGrassesBasal = Column(Integer)
+    AnnualForbsBasal = Column(Integer)
+    OtherBasal = Column(Integer)
+    PrimaryKey = Column(Text,ForeignKey('header.PrimaryKey'))
+    DBKey = Column(Text)
+    SeqNo = Column(Text)
+    RecType = Column(Text)
+    GapStart = Column(Numeric)
+    GapEnd = Column(Numeric)
+    Gap = Column(Numeric)
+    Source = Column(Text)
+    gap_header = relationship("dataHeader", backref = backref("dataGap"))
 
+# add the relationship as an argument and also as a statement in the body
     def __init__(self, LineKey, RecKey, DateModified, FormType, FormDate, Observer,
     Recorder, DataEntry, DataErrorChecking, Direction, Measure, LineLengthAmount,
     GapMin, GapData, PerennialsCanopy, AnnualGrassesCanopy, AnnualForbsCanopy,
