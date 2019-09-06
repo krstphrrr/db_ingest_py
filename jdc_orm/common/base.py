@@ -9,19 +9,33 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# connection parameters
-db_user = os.environ.get('DB_USER')
-db_password = os.environ.get('DB_PASS')
-db_host = os.environ.get('DB_HOST')
+# connection class to construct engine url
+class conx():
 
-# connection credentials
-db_connect_url = sa_url.URL(
-    drivername="postgresql",
-    username =db_user,
-    password=db_password,
-    host=db_host,
-    port=5432,
-    database="gisdb")
+    dbu = 'DB_USER'
+    dbp = 'DB_PASS'
+    dbh = 'DB_HOST'
+    db_url=''
+    # dburl= u.print()
+    def __init__(self):
+       import os
+       from sqlalchemy.engine import url as sa_url
+       self.db_user = os.environ.get(self.dbu)
+       self.db_password = os.environ.get(self.dbp)
+       self.db_host = os.environ.get(self.dbh)
+       self.db_url = #####
+    def u(self):
+        import os
+        from sqlalchemy.engine import url as sa_url
+        print(sa_url.URL(drivername="postgresql", username =self.db_user,
+         password=self.db_password, host=self.db_host, port=5432, database="gisdb"))
+
+       # # connection credentials
+       # self.db_connect_url =
+conx.db_url
+# need to add/append this into conx attribute and make it calleable
+self.db_url.extend(print(sa_url.URL(drivername="postgresql", username =self.db_user,
+ password=self.db_password, host=self.db_host, port=5432, database="gisdb")))
 
 # sqlalchemy engine
 engine = create_engine(db_connect_url)

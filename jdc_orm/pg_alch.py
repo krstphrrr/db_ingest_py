@@ -1,15 +1,16 @@
 
-from sqlalchemy import Column, String, Integer, Date
-from base import Base
+
+# importing connection/query tool
+from common.base import jdc_db
+# instantiating tool
+ok = jdc_db()
+# querying user tables just in case
+ok.run_query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
 
 
-dbstr='posgresql+psycopg2://kris:JDC@1912!@jornada-ldc2.jrn.nmsu.edu:5432/gisdb'
+ok.run_query('DROP TABLE gisdb.public."dataHeader"')
 
 # creating header table
 
 from table.header import dataHeader
-# dataHeader.__table__.create()
-from common.base import jdc_db
-opn = jdc_db()
-print(dir(opn))
-opn.run_query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
+dataHeader.__table__.create()

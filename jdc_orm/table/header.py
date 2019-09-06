@@ -1,7 +1,19 @@
 
-
+from sqlalchemy.engine import url as sa_url
 from sqlalchemy import Column, String, Integer, Text, Numeric, Date
 from common.base import Base
+from common.base
+# connection credentials
+db_connect_url = sa_url.URL(
+    drivername="postgresql",
+    username =db_user,
+    password=db_password,
+    host=db_host,
+    port=5432,
+    database="gisdb")
+
+# sqlalchemy engine
+engine = create_engine(db_connect_url)
 
 class dataHeader(Base):
     __tablename__ = 'dataHeader'
