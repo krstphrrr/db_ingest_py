@@ -3,7 +3,7 @@
 from sqlalchemy import Column, String, Date, Text, Numeric, Integer, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from base import Base
+from common.base import Base
 
 
 class dataGap(Base):
@@ -52,7 +52,6 @@ class dataGap(Base):
     OtherCanopy, Notes, NoCanopyGaps, NoBasalGaps, DateLoadedInDb, PerennialsBasal,
     AnnualGrassesBasal, AnnualForbsBasal, OtherBasal, PrimaryKey, DBKey, SeqNo,
     RecType, GapStart, GapEnd, Gap, Source, gap_header):
-
         self.LineKey = LineKey
         self.RecKey = RecKey
         self.DateModified = DateModified

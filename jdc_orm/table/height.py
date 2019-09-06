@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Text, Integer, Numeric, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from base import Base
+from common.base import Base
 
 class dataHeight(Base):
     __tablename__='dataHeight'

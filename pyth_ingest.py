@@ -1,9 +1,9 @@
-import psycopg2
+
+
+
+
+import gdal, gdaltools, os, csv, psycopg2, re
 import pandas as pd
-import csv
-import os
-import gdaltools
-import gdal
 import geopandas as gpd
 
 # reading up env. variables
@@ -32,7 +32,7 @@ class mydb_2(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self):
         self.commit()
         self.connection.close()
 ##
@@ -87,48 +87,66 @@ q1 = mydb_2()
 
 q1.query(q,'PrimaryKey','gisdb.public.\"dataHeader\"')
 q1.query(q)
+conn.commit()
+
 
 # header table: drop constraints > drop table > create schema > populate
-conn.commit()
-cur.execute('ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS dataHeader_pkey CASCADE;')
 
+## table name extraction
+cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
 table_list = cur.fetchall()
-import re
+
 t_list = []
+
 ###########################
 for tab in table_list:
     #regex101.com
     t_list.append(re.search(r"\(\'(.*?)\'\,\)",str(tab)).group(1))
 # with t_list full, one could execute an alter table with each
 
+# drop_fk runs opens cursor > replaces argument twice in drop_FK statement
 def drop_fk(fk_tbl):
     from psycopg2 import sql
     con1 = psycopg2.connect(dbname="gisdb", user=db_user, password=db_password,
                             port="5432", host=db_host)
-
+    cur1 = con1.cursor()
     # need to define a variable that concatenates with FK names,
     # then add both(tablename, fk name) to alter/drop statement
-    cur.execute(
-    sql.SQL('ALTER * FROM gisdb.public.{0}').format(sql.Identifier(str(col)) )
-    )
 
-for col in t_list:
+    key_str = "{}_PrimaryKey_fkey".format(str(fk_tbl))
+    cur1.execute(
+    sql.SQL('ALTER TABLE gisdb.public.{0} DROP CONSTRAINT IF EXISTS {1}').format(sql.Identifier(fk_tbl),sql.Identifier(key_str))
+    )
+    con1.commit()
+
+
+# loop through list of table names, dropping foreign keys as it goes
+for tbl in t_list:
+    drop_fk(tbl)
+
+# only geo_spe remain
+# to avoid: foreign key names should be 'tablename_PKname_fkey'
+cur.execute("""
+ALTER TABLE gisdb.public.geo_spe DROP CONSTRAINT geo_spe_fk;
+
+""")
+
+
 ###########################
 cur.fetchone()
 cur.execute('SELECT * FROM gisdb.public."geo_ind" LIMIT 10')
 
-cur.execute("SELECT TOP FROM information_schema.table_constraints WHERE CONSTRAINT_TYPE = 'FOREIGN KEY'")
-
-
-
-
 cur.execute("""
-ALTER TABLE gisdb.public."dataHeader" DROP CONSTRAINT IF EXISTS dataHeader_pkey CASCADE;
 DROP TABLE IF EXISTS gisdb.public."dataHeader";
 DROP TABLE IF EXISTS gisdb.public."dataGap";
 DROP TABLE IF EXISTS gisdb.public."dataHeight";
 DROP TABLE IF EXISTS gisdb.public."dataSpeciesInventory";
 DROP TABLE IF EXISTS gisdb.public."dataSoilStability";
+DROP TABLE IF EXISTS gisdb.public."dataLPI";
+DROP TABLE IF EXISTS gisdb.public.geo_ind;
+DROP TABLE IF EXISTS gisdb.public.geo_spe;
+DROP TABLE IF EXISTS gisdb.public.geo_aim;
+DROP TABLE IF EXISTS gisdb.public.geo_spp;
 """)
 
 with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
