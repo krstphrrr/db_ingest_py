@@ -5,7 +5,7 @@ import psycopg2
 import logging
 import sys
 from sqlalchemy.engine import url as sa_url
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -15,34 +15,26 @@ class conx():
     dbu = 'DB_USER'
     dbp = 'DB_PASS'
     dbh = 'DB_HOST'
-    db_url=''
+
     # dburl= u.print()
-    def __init__(self):
+    def __init__(self, url):
        import os
        from sqlalchemy.engine import url as sa_url
        self.db_user = os.environ.get(self.dbu)
        self.db_password = os.environ.get(self.dbp)
        self.db_host = os.environ.get(self.dbh)
-       self.db_url = #####
-    def u(self):
-        import os
-        from sqlalchemy.engine import url as sa_url
-        print(sa_url.URL(drivername="postgresql", username =self.db_user,
-         password=self.db_password, host=self.db_host, port=5432, database="gisdb"))
+       self.db_url = sa_url.URL(drivername="postgresql", username =self.db_user, password=self.db_password, host=self.db_host, port=5432, database=url)
 
-       # # connection credentials
-       # self.db_connect_url =
-conx.db_url
-# need to add/append this into conx attribute and make it calleable
-self.db_url.extend(print(sa_url.URL(drivername="postgresql", username =self.db_user,
- password=self.db_password, host=self.db_host, port=5432, database="gisdb")))
 
+db = conx("gisdb")
+
+# got url > drop url
 # sqlalchemy engine
-engine = create_engine(db_connect_url)
+engine = create_engine(db.db_url)
+
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
-
 
 class jdc_db():
     """ db connection class """
