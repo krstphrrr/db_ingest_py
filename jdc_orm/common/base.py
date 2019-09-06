@@ -76,7 +76,3 @@ class jdc_db():
             if self.conn:
                 self.conn.close()
                 logging.info('DB connection closed!')
-
-ok = jdc_db()
-ok.run_query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
-ok.run_query('SELECT * FROM gisdb.public."dataHeader" LIMIT 10')
