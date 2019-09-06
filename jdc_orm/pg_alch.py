@@ -5,31 +5,11 @@ from base import Base
 
 dbstr='posgresql+psycopg2://kris:JDC@1912!@jornada-ldc2.jrn.nmsu.edu:5432/gisdb'
 
-db = create_engine(dbstr)
-base = declarative_base() #
+# creating header table
 
-class dataHeader(base):
-    __tablename__ = 'dataHeader'
-    PrimaryKey = Column(VARCHAR(100), primary_key = True)
-    SpeciesState = Column(VARCHAR(2))
-    PlotID = Column(TEXT)
-    PlotKey = Column(VARCHAR(50))
-    DBKey = Column(TEXT)
-    EcologicalSiteId = Column(VARCHAR(50))
-    Latitude_NAD83 = Column(NUMERIC)
-    Longitude_NAD83 = Column(NUMERIC)
-    State = Column(VARCHAR(2))
-    County = Column(VARCHAR(50))
-    DateEstablished = Column(DATE)
-    DateLoadedInDb = Column(DATE)
-    ProjectName = Column(TEXT)
-    Source = Column(TEXT)
-    LocationType = Column(VARCHAR(20))
-    DateVisited = Column(DATE)
-    Elevation = Column(NUMERIC)
-    PercentCoveredByEcoSite = Column(NUMERIC)
-
-Session = sessionmaker(db)
-session = Session()
-
-base.metadata.create_all(db)
+from table.header import dataHeader
+# dataHeader.__table__.create()
+from common.base import jdc_db
+opn = jdc_db()
+print(dir(opn))
+opn.run_query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")

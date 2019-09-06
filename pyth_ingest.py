@@ -26,67 +26,7 @@ cur = conn.cursor()
 
 
 
-class mydb_2(object):
-    _instance = None
-##  magic methods : allow arguments to be used with the 'with' statement
-    def __enter__(self):
-        return self
 
-    def __exit__(self):
-        self.commit()
-        self.connection.close()
-##
-    def __new__(cls):
-
-        if cls._instance is None:
-            cls._instance = object.__new__(cls)
-
-            db_config = {'dbname': 'gisdb', 'host': os.environ.get('DB_HOST'),
-                     'password': os.environ.get('DB_PASS'), 'port': 5432, 'user': os.environ.get('DB_USER')}
-            try:
-                print('connecting to PostgreSQL database...')
-                connection = mydb_2._instance.connection = psycopg2.connect(**db_config)
-                cursor = mydb_2._instance.cursor = connection.cursor()
-                cursor.execute('SELECT VERSION()')
-                db_version = cursor.fetchone()
-
-            except Exception as error:
-                print('Error: connection not established {}'.format(error))
-                mydb_2._instance = None
-
-            else:
-                print('connection established\n{}'.format(db_version[0]))
-
-        return cls._instance
-
-    def __init__(self):
-        self.connection = self._instance.connection
-        self.cursor = self._instance.cursor
-
-    def query(query, params=None,*,self):
-        try:
-            result = self.cursor.execute(query,*params)
-
-
-        except Exception as error:
-            print('error execting query "{}", error: {}'.format(query, error))
-            return None
-        else:
-            return result
-
-
-    def __del__(self):
-        self.connection.close()
-        self.cursor.close()
-
-# test query
-q = "SELECT {col} FROM gisdb.public.{table}"
-
-# instantiation
-q1 = mydb_2()
-
-q1.query(q,'PrimaryKey','gisdb.public.\"dataHeader\"')
-q1.query(q)
 conn.commit()
 
 
