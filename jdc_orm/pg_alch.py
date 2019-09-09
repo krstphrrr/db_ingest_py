@@ -16,3 +16,30 @@ with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r'
 #test: do tables EXIST
 ok = jdc_db() # instantiation
 ok.run_query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
+
+
+# creating gap tables
+from sqlalchemy import *
+metadata = MetaData()
+metadata.clear()
+dataGap.metadata.clear()
+from table.gap import dataGap
+dataGap.__table__.create(engine)
+
+
+
+import pandas as pd
+
+gapdf = pd.read_csv('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/gap_subs.csv', low_memory = False)
+gapdf.shape
+# 1,369,642 rows
+
+gapdf.columns
+
+
+gapdf.groupby('LineKey').nunique()
+
+str(gapdf['LineKey'].columns)
+for col in gapdf.columns:
+    print(col,gapdf[col].nunique())
+gapdf['LineKey'].nunique()

@@ -5,12 +5,11 @@ from sqlalchemy.orm import relationship, backref
 
 from common.base import Base
 
-
 class dataGap(Base):
     __tablename__='dataGap'
-
-    LineKey = Column('LineKey', String)
-    RecKey = Column('RecKey', String)
+    # __table_args__ = {'extend_existing': True} 
+    LineKey = Column('LineKey', String, primary_key = True)
+    RecKey = Column('RecKey', String, primary_key = True)
     DateModified = Column('DateModified', Date)
     FormType = Column('FormType', Text)
     FormDate = Column('FormDate', Date)
@@ -45,7 +44,6 @@ class dataGap(Base):
     Source = Column('Source', Text)
     gap_header = relationship("dataHeader", backref = "dataGap")
 
-# add the relationship as an argument and also as a statement in the body
     def __init__(self, LineKey, RecKey, DateModified, FormType, FormDate, Observer,
     Recorder, DataEntry, DataErrorChecking, Direction, Measure, LineLengthAmount,
     GapMin, GapData, PerennialsCanopy, AnnualGrassesCanopy, AnnualForbsCanopy,

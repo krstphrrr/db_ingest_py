@@ -18,7 +18,7 @@ class dataSoilStability(Base):
     SoilStabSubSurface = Column('SoilStabSubSurface', Integer)
     Notes = Column('Notes', Text)
     DateLoadedInDb = Column('DateLoadedInDb', Date)
-    PrimaryKey = Column('PrimaryKey', ForeignKey('dataHeader.PrimaryKey')) gisdb.public."dataHeader"("PrimaryKey"))
+    PrimaryKey = Column('PrimaryKey', ForeignKey('dataHeader.PrimaryKey'))
     DBKey = Column('DBKey', Text)
     Position = Column('Position', Integer)
     Line = Column('Line', String)
@@ -52,3 +52,4 @@ class dataSoilStability(Base):
         self.Rating = Rating
         self.Hydro = Hydro
         self.Source = Source
+        self.soilstability_header = soilstability_header
