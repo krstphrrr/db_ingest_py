@@ -6,7 +6,7 @@ from common.base import Base
 class dataHeader(Base):
     __tablename__ = 'dataHeader'
 
-    PrimaryKey = Column(String, primary_key = True)
+    PrimaryKey = Column('PrimaryKey', Text, primary_key = True)
     SpeciesState = Column('SpeciesState',String)
     PlotID = Column('PlotID',Text)
     PlotKey = Column('PlotKey',String)

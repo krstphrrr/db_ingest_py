@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from sqlalchemy import Column, Text, Integer, Numeric, String, ForeignKey
+from sqlalchemy import Column, Text, Date, Integer, Numeric, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from base import Base
@@ -8,33 +8,33 @@ from base import Base
 class dataLPI(Base):
     __tablename__='dataLPI'
 
-    LineKey = Column(String)
-    RecKey = Column(String)
-    DateModified = Column(DATE)
-    FormType = Column(Text)
-    FormDate = Column(DATE)
-    Observer = Column(Text)
-    Recorder = Column(Text)
-    DataEntry = Column(Text)
-    DataErrorChecking = Column(Text)
-    Direction = Column(String)
-    Measure = Column(Integer)
-    LineLengthAmount = Column(Numeric)
-    SpacingIntegerervalAmount = Column(Numeric)
-    SpacingType = Column(Text)
-    HeightOption = Column(Text)
-    HeightUOM = Column(Text)
-    ShowCheckbox = Column(Integer)
-    CheckboxLabel = Column(Text)
-    PrimaryKey = Column(Text, ForeignKey('dataHeader.PrimaryKey'))
-    DBKey = Column(Text)
-    PoIntegerLoc = Column(Numeric)
-    PoIntegerNbr = Column(Integer)
-    ShrubShape = Column(Text)
-    layer = Column(Text)
-    code = Column(Text)
-    chckbox = Column(Integer)
-    Source = Column(Text)
+    LineKey = Column('LineKey', String)
+    RecKey = Column('RecKey', String)
+    DateModified = Column('DateModified', Date)
+    FormType = Column('FormType', Text)
+    FormDate = Column('FormDate', Date)
+    Observer = Column('Observer', Text)
+    Recorder = Column('Recorder', Text)
+    DataEntry = Column('DataEntry', Text)
+    DataErrorChecking = Column('DataErrorChecking', Text)
+    Direction = Column('Direction', String)
+    Measure = Column('Measure', Integer)
+    LineLengthAmount = Column('LineLengthAmount', Numeric)
+    SpacingIntegerervalAmount = Column('SpacingIntegerervalAmount', Numeric)
+    SpacingType = Column('SpacingType', Text)
+    HeightOption = Column('HeightOption', Text)
+    HeightUOM = Column('HeightUOM', Text)
+    ShowCheckbox = Column('ShowCheckbox', Integer)
+    CheckboxLabel = Column('CheckboxLabel', Text)
+    PrimaryKey = Column('PrimaryKey', Text, ForeignKey('dataHeader.PrimaryKey'))
+    DBKey = Column('DBKey', Text)
+    PoIntegerLoc = Column('PoIntegerLoc', Numeric)
+    PoIntegerNbr = Column('PoIntegerNbr', Integer)
+    ShrubShape = Column('ShrubShape', Text)
+    layer = Column('layer', Text)
+    code = Column('code', Text)
+    chckbox = Column('chckbox', Integer)
+    Source = Column('Source', Text)
     lpi_header = relationship("dataHeader", backref="dataLPI")
 
 # add the relationship as an argument and also as a statement in the body
@@ -43,7 +43,6 @@ class dataLPI(Base):
     SpacingIntegerervalAmount, SpacingType, HeightOption, HeightUOM, ShowCheckbox,
     CheckboxLabel, PrimaryKey, DBKey, PoIntegerLoc, PoIntegerNbr, ShrubShape, layer,
     code, chckbox, Source, lpi_header):
-
         self.LineKey = LineKey
         self.RecKey = RecKey
         self.DateModified = DateModified

@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from sqlalchemy import Column, Text, Integer, Numeric, String, ForeignKey
+from sqlalchemy import Column, Text, Date, Integer, Numeric, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from common.base import Base
@@ -8,35 +8,35 @@ from common.base import Base
 class dataHeight(Base):
     __tablename__='dataHeight'
 
-   PrimaryKey = Column(Text, ForeignKey("dataHeader.PrimaryKey"))
-   DBKey = Column(Text)
-   PoIntegerLoc = Column(Numeric)
-   PoIntegerNbr = Column(Integer)
-   RecKey = Column(String)
-   Height = Column(Numeric)
-   Species = Column(Text)
-   Chkbox = Column(Integer)
-   type = Column(Text)
-   GrowthHabit_measured = Column(Text)
-   LineKey = Column(String)
-   DateModified = Column(DATE)
-   FormType = Column(Text)
-   FormDate = Column(DATE)
-   Observer = Column(Text)
-   Recorder = Column(Text)
-   DataEntry = Column(Text)
-   DataErrorChecking = Column(Text)
-   Direction = Column(String)
-   Measure = Column(Integer)
-   LineLengthAmount = Column(Numeric)
-   SpacingIntegerervalAmount = Column(Numeric)
-   SpacingType = Column(Text)
-   HeightOption = Column(Text)
-   HeightUOM = Column(Text)
-   ShowCheckbox = Column(Integer)
-   CheckboxLabel = Column(Text)
-   Source = Column(Text)
-   UOM = Column(Text)
+   PrimaryKey = Column('PrimaryKey',Text, ForeignKey("dataHeader.PrimaryKey"))
+   DBKey = Column('DBKey',Text)
+   PoIntegerLoc = Column('PoIntegerLoc',Numeric)
+   PoIntegerNbr = Column('PoIntegerNbr',Integer)
+   RecKey = Column('RecKey',String)
+   Height = Column('Height',Numeric)
+   Species = Column('Species',Text)
+   Chkbox = Column('Chkbox',Integer)
+   type = Column('type',Text)
+   GrowthHabit_measured = Column('GrowthHabit_measured',Text)
+   LineKey = Column('LineKey',String)
+   DateModified = Column('DateModified',Date)
+   FormType = Column('FormType',Text)
+   FormDate = Column('FormDate',Date)
+   Observer = Column('Observer',Text)
+   Recorder = Column('Recorder',Text)
+   DataEntry = Column('DataEntry',Text)
+   DataErrorChecking = Column('DataErrorChecking',Text)
+   Direction = Column('Direction',String)
+   Measure = Column('Measure',Integer)
+   LineLengthAmount = Column('LineLengthAmount',Numeric)
+   SpacingIntegerervalAmount = Column('SpacingIntegerervalAmount',Numeric)
+   SpacingType = Column('SpacingType',Text)
+   HeightOption = Column('HeightOption',Text)
+   HeightUOM = Column('HeightUOM',Text)
+   ShowCheckbox = Column('ShowCheckbox',Integer)
+   CheckboxLabel = Column('CheckboxLabel',Text)
+   Source = Column('Source',Text)
+   UOM = Column('UOM',Text)
    height_header = relationship("dataHeader", backref="dataHeight")
 
 # add the relationship as an argument and also as a statement in the body
