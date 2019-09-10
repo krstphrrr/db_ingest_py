@@ -24,7 +24,17 @@ class conx():
        self.db_password = os.environ.get(self.dbp)
        self.db_host = os.environ.get(self.dbh)
        self.db_url = sa_url.URL(drivername="postgresql", username =self.db_user, password=self.db_password, host=self.db_host, port=5432, database=url)
-
+class conx2():
+    conn = ''
+    # cur = ''
+    def att(self,url):
+        import psycopg2, sys
+        self.conn = psycopg2.connect(dbname=url,
+                                user=db_user,
+                                password=db_password,
+                                port="5432",
+                                host=db_host)
+        # self.cur = conn.cursor()
 
 db = conx("gisdb")
 

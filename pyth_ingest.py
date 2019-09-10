@@ -14,7 +14,7 @@ db_host = os.environ.get('DB_HOST')
 
 # table ingestion from csv, null values are 'NA'
 # still requires table schema
-from db_init import dbinit
+
 
 
 conn = psycopg2.connect(dbname="gisdb",

@@ -2,15 +2,17 @@
 
 from sqlalchemy import Column, String, Date, Text, Numeric, Integer, ForeignKey
 from sqlalchemy.orm import relationship, backref
-
+from sqlalchemy.dialects import postgresql
 from common.base import Base
 
 class dataGap(Base):
     __tablename__='dataGap'
-    # __table_args__ = {'extend_existing': True} 
+    # __table_args__ = {'extend_existing': True}
+    #
+    # pk_id = Column(postgresql.BIGINT, primary_key = True)
     LineKey = Column('LineKey', String, primary_key = True)
     RecKey = Column('RecKey', String, primary_key = True)
-    DateModified = Column('DateModified', Date)
+    DateModified = Column('DateModified', Date, primary_key = True)
     FormType = Column('FormType', Text)
     FormDate = Column('FormDate', Date)
     Observer = Column('Observer', Text)
@@ -34,7 +36,7 @@ class dataGap(Base):
     AnnualGrassesBasal = Column('AnnualGrassesBasal', Integer)
     AnnualForbsBasal = Column('AnnualForbsBasal', Integer)
     OtherBasal = Column('OtherBasal', Integer)
-    PrimaryKey = Column('PrimaryKey', Text, ForeignKey('dataHeader.PrimaryKey'))
+    PrimaryKey = Column('PrimaryKey', Text, ForeignKey('dataHeader.PrimaryKey'),primary_key=True)
     DBKey = Column('DBKey', Text)
     SeqNo = Column('SeqNo', Text)
     RecType = Column('RecType', Text)
@@ -42,14 +44,14 @@ class dataGap(Base):
     GapEnd = Column('GapEnd', Numeric)
     Gap = Column('Gap', Numeric)
     Source = Column('Source', Text)
-    gap_header = relationship("dataHeader", backref = "dataGap")
+
 
     def __init__(self, LineKey, RecKey, DateModified, FormType, FormDate, Observer,
     Recorder, DataEntry, DataErrorChecking, Direction, Measure, LineLengthAmount,
     GapMin, GapData, PerennialsCanopy, AnnualGrassesCanopy, AnnualForbsCanopy,
     OtherCanopy, Notes, NoCanopyGaps, NoBasalGaps, DateLoadedInDb, PerennialsBasal,
     AnnualGrassesBasal, AnnualForbsBasal, OtherBasal, PrimaryKey, DBKey, SeqNo,
-    RecType, GapStart, GapEnd, Gap, Source, gap_header):
+    RecType, GapStart, GapEnd, Gap, Source):
         self.LineKey = LineKey
         self.RecKey = RecKey
         self.DateModified = DateModified
@@ -84,4 +86,3 @@ class dataGap(Base):
         self.GapEnd = GapEnd
         self.Gap = Gap
         self.Source = Source
-        self.gap_header = gap_header

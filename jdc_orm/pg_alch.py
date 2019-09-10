@@ -2,6 +2,15 @@
 # importing connection/query tool
 from common.base import jdc_db
 
+# dropping fk's
+
+# dropping tables
+ok = jdc_db()
+ok.run_query('DROP TABLE IF EXISTS gisdb.public."dataGap"')
+ok.run_query('DROP TABLE IF EXISTS gisdb.public."dataHeader"')
+
+
+
 # creating header table
 from table.header import dataHeader
 from common.base import engine
@@ -9,9 +18,11 @@ from __init__ import conn,cur
 
 dataHeader.__table__.create(engine)
 # header table data ingestion
+
 with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
     cur.copy_expert("COPY gisdb.public.\"dataHeader\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
     conn.commit()
+    # conn.close()
 
 #test: do tables EXIST
 ok = jdc_db() # instantiation
@@ -19,13 +30,15 @@ ok.run_query("SELECT table_name FROM information_schema.tables WHERE table_schem
 
 
 # creating gap tables
-from sqlalchemy import *
-metadata = MetaData()
-metadata.clear()
-dataGap.metadata.clear()
+
 from table.gap import dataGap
+
 dataGap.__table__.create(engine)
 
+with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/gap_subs.csv','r') as f:
+    cur.copy_expert("COPY gisdb.public.\"dataGap\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
+    conn.commit()
+    # conn.close()
 
 
 import pandas as pd
@@ -36,10 +49,5 @@ gapdf.shape
 
 gapdf.columns
 
-
-gapdf.groupby('LineKey').nunique()
-
-str(gapdf['LineKey'].columns)
 for col in gapdf.columns:
     print(col,gapdf[col].nunique())
-gapdf['LineKey'].nunique()
