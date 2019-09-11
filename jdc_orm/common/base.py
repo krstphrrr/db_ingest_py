@@ -31,6 +31,8 @@ class conx():
        self.db_host = os.environ.get(self.dbh)
        self.db_url = sa_url.URL(drivername="postgresql", username =self.db_user, password=self.db_password, host=self.db_host, port=5432, database=url)
 
+db = conx('gisdb')
+
 class conx2():
     dbu = 'DB_USER'
     dbp = 'DB_PASS'

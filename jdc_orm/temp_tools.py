@@ -249,7 +249,7 @@ def create_tbls():
         cur = conn.cursor()
         for command in commands:
             cur.execute(command)
-            print("create table.." + command)
+            print("Tables created!")
         cur.close()
         conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -257,3 +257,35 @@ def create_tbls():
     finally:
         if conn is None:
             conn.close()
+
+#####
+
+def tbl_ingest():
+
+    subs = 'm_subset/'
+    path = 'C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/'
+    c = '.csv'
+    s = '_subs'
+    str='data'
+    files = ['header', 'height','gap','spp','soil','lpi']
+    for nm in files:
+        import os, psycopg2
+        from psycopg2 import sql
+        params = config()
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+
+        if nm == 'header':
+            with open(os.path.join(path,nm+c),'r') as f:
+                dual = os.path.join(str+nm.capitalize())
+                cur.copy_expert(
+                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                conn.commit()
+
+        else:
+            # print(os.path.join(path,subs+nm+s+c))
+            with open(os.path.join(path,subs+nm+s+c)) as f:
+                dual = os.path.join(str+nm.capitalize())
+                cur.copy_expert(
+                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                conn.commit()

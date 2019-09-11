@@ -1,45 +1,44 @@
 
-# importing connection/query tool
-from common.base import jdc_db
+## setup script
+from temp_tools import tbl_list
 
-# dropping fk's
+tlist = tbl_list()
+tlist.all()
+tlist.t_list
 
-# dropping tables
-ok = jdc_db()
-ok.run_query('DROP TABLE IF EXISTS gisdb.public."dataGap"')
-ok.run_query('DROP TABLE IF EXISTS gisdb.public."dataHeader"')
+###########################
+
+from temp_tools import drop_fk
+for tbl in tlist.t_list:
+    drop_fk(str(tbl))
+
+
+from temp_tools import drop_tbl
+for tbl in tlist.t_list:
+    drop_tbl(tbl)
 
 
 
-# creating header table
-from table.header import dataHeader
+# all table schemas created simultaneously except those w geometry
+from temp_tools import create_tbls
+create_tbls()
+
 from common.base import engine
 from __init__ import conn,cur
 
-dataHeader.__table__.create(engine)
-# header table data ingestion
 
+# data ingestion
 with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
     cur.copy_expert("COPY gisdb.public.\"dataHeader\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
     conn.commit()
-    # conn.close()
 
-#test: do tables EXIST
-ok = jdc_db() # instantiation
-ok.run_query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
-
-
-# creating gap tables
-
-from table.gap import dataGap
-
-dataGap.__table__.create(engine)
 
 with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/gap_subs.csv','r') as f:
     cur.copy_expert("COPY gisdb.public.\"dataGap\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
     conn.commit()
     # conn.close()
 
+gapdf.head()
 
 import pandas as pd
 

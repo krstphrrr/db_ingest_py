@@ -1,3 +1,30 @@
+
+# reading up env. variables
+
+db_user = os.environ.get('DB_USER')
+db_password = os.environ.get('DB_PASS')
+db_host = os.environ.get('DB_HOST')
+
+# table ingestion from csv, null values are 'NA'
+# still requires table schema
+
+
+
+conn = psycopg2.connect(dbname="gisdb",
+                        user=db_user,
+                        password=db_password,
+                        port="5432",
+                        host=db_host)
+cur = conn.cursor()
+
+
+
+
+conn.commit()
+
+
+
+
 ## table name extraction
 cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
 table_list = cur.fetchall()
