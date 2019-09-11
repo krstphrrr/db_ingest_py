@@ -4,10 +4,16 @@ import os
 import psycopg2
 import logging
 import sys
+from configparser import ConfigParser
 from sqlalchemy.engine import url as sa_url
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+engine = create_engine(db.db_url)
+
+Session = sessionmaker(bind=engine)
+
+Base = declarative_base()
 
 # connection class to construct engine url
 class conx():
@@ -24,27 +30,33 @@ class conx():
        self.db_password = os.environ.get(self.dbp)
        self.db_host = os.environ.get(self.dbh)
        self.db_url = sa_url.URL(drivername="postgresql", username =self.db_user, password=self.db_password, host=self.db_host, port=5432, database=url)
-class conx2():
-    conn = ''
-    # cur = ''
-    def att(self,url):
-        import psycopg2, sys
-        self.conn = psycopg2.connect(dbname=url,
-                                user=db_user,
-                                password=db_password,
-                                port="5432",
-                                host=db_host)
-        # self.cur = conn.cursor()
 
-db = conx("gisdb")
+class conx2():
+    dbu = 'DB_USER'
+    dbp = 'DB_PASS'
+    dbh = 'DB_HOST'
+    # cur = ''
+    def __init__(self,url):
+
+        import psycopg2, sys, os
+        self.db_user = os.environ.get(self.dbu)
+        self.db_password = os.environ.get(self.dbp)
+        self.db_host = os.environ.get(self.dbh)
+        self.conn = psycopg2.connect(dbname=url,
+                                user=self.db_user,
+                                password=self.db_password,
+                                port="5432",
+                                host=self.db_host)
+    def curr(self):
+        self.cur = self.conn.cursor()
+
+# extracting table names into list
+
+
+
 
 # got url > drop url
 # sqlalchemy engine
-engine = create_engine(db.db_url)
-
-Session = sessionmaker(bind=engine)
-
-Base = declarative_base()
 
 class jdc_db():
     """ db connection class """

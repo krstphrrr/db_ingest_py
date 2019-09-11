@@ -59,10 +59,24 @@ def drop_fk(fk_tbl):
     )
     con1.commit()
 
+def drop_tbl(fk_tbl):
+    from psycopg2 import sql
+    con1 = psycopg2.connect(dbname="gisdb", user=db_user, password=db_password,
+                            port="5432", host=db_host)
+    cur1 = con1.cursor()
+    cur1.execute(
+    sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(sql.Identifier(fk_tbl))
+    )
+    con1.commit()
 
 # loop through list of table names, dropping foreign keys as it goes
 for tbl in t_list:
     drop_fk(tbl)
+
+for tbl in t_list:
+    drop_tbl(tbl)
+
+
 
 # only geo_spe remain
 # to avoid: foreign key names should be 'tablename_PKname_fkey'
