@@ -61,3 +61,54 @@ def drop_tbl(fk_tbl):
     sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(sql.Identifier(fk_tbl))
     )
     con1.commit()
+
+for nm in files:
+    import os, psycopg2
+    from psycopg2 import sql
+    params = config()
+    conn = psycopg2.connect(**params)
+    cur = conn.cursor()
+    # load csv: construct csv inside with open
+    if nm == 'header':
+        with open(os.path.join(path,nm+c),'r') as f:
+            dual = os.path.join(str+nm.capitalize())
+            cur.copy_expert(
+            sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+            conn.commit()
+
+    else:
+        # print(os.path.join(path,subs+nm+s+c))
+        with open(os.path.join(path,subs+nm+s+c)) as f:
+            dual = os.path.join(str+nm.capitalize())
+            cur.copy_expert(
+            sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+            conn.commit()
+
+
+
+import os
+a = 'species'
+b = 'inventory'
+ab = os.path.join(a+b)
+print(os.path.join(a.capitalize()+b.capitalize()))
+a = 'soil'
+b = 'stability'
+
+os.path.join(a.capitalize(),b.capitalize())
+c = 'lpi'
+
+subs = 'm_subset/'
+path = 'C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/'
+c = '.csv'
+s = '_subs'
+str='data'
+files = ['header', 'height','gap','spp','soil','lpi']
+
+os.path.join(path,subs+str+files[-2]+s+c)
+
+
+y = [x for x in files if x!='lpi'and x!='spp'and x!='soil']
+type(y)
+
+from temp_tools import t_list
+tlist = t_list()

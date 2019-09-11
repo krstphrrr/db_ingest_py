@@ -21,32 +21,14 @@ for tbl in tlist.t_list:
 
 # all table schemas created simultaneously except those w geometry
 from temp_tools import create_tbls
-create_tbls()
+create_tbls() # needs actual names
 
-from common.base import engine
-from __init__ import conn,cur
+
 
 
 # data ingestion
-with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/header.csv','r') as f:
-    cur.copy_expert("COPY gisdb.public.\"dataHeader\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
-    conn.commit()
+from temp_tools import tbl_ingest
 
+tbl_ingest() # needs ok after each successful csv ingest
 
-with open('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/gap_subs.csv','r') as f:
-    cur.copy_expert("COPY gisdb.public.\"dataGap\" FROM STDIN WITH CSV HEADER NULL \'NA\'" ,f)
-    conn.commit()
-    # conn.close()
-
-gapdf.head()
-
-import pandas as pd
-
-gapdf = pd.read_csv('C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/m_subset/gap_subs.csv', low_memory = False)
-gapdf.shape
-# 1,369,642 rows
-
-gapdf.columns
-
-for col in gapdf.columns:
-    print(col,gapdf[col].nunique())
+# indicator tables schema + ingestion

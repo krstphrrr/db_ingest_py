@@ -331,7 +331,7 @@ conn.commit()
 
 # indicator tables w geometry - species table
 conn.commit()
-cur.execute("DROP TABLE IF EXISTS gisdb.public.\"geo_spe\";")
+cur.execute()
 path = "C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/"
 
 gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
@@ -339,7 +339,7 @@ gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
 ogr = gdaltools.ogr2ogr()
 ogr.set_encoding("UTF-8")
 # file input - geojson
-ogr.set_input(os.path.join(path,'species_geojson.geojson'),srs="EPSG:4326")
+
 
 ogr.geom_type = 'POINT'
 con = gdaltools.PgConnectionString(host=db_host, port=5432, dbname="gisdb", schema="public", user=db_user, password=db_password)

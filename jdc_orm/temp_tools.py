@@ -1,3 +1,5 @@
+# all functions could be methods inside a grouping class
+
 from configparser import ConfigParser
 
 # connection credentials within .ini
@@ -267,7 +269,7 @@ def tbl_ingest():
     c = '.csv'
     s = '_subs'
     str='data'
-    files = ['header', 'height','gap','spp','soil','lpi']
+    files = ['header', 'height','gap','spp','soil','LPI']
     for nm in files:
         import os, psycopg2
         from psycopg2 import sql
@@ -282,10 +284,98 @@ def tbl_ingest():
                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
                 conn.commit()
 
+        elif nm == 'spp':
+            a = 'species'
+            b = 'inventory'
+            with open(os.path.join(path,subs+nm+s+c),'r') as f: # path/spp_subs.csv
+                nm = os.path.join(a.capitalize()+b.capitalize()) # nm = SpeciesInventory
+                dual = os.path.join(str+nm) # dual = dataSpeciesInventory
+                cur.copy_expert(
+                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                conn.commit()
+
+        elif nm == 'soil':
+            a = 'soil'
+            b = 'stability'
+            with open(os.path.join(path,subs+nm+s+c),'r') as f: # path/spp_subs.csv
+                nm = os.path.join(a.capitalize()+b.capitalize()) # nm = SpeciesInventory
+                dual = os.path.join(str+nm) # dual = dataSpeciesInventory
+                cur.copy_expert(
+                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                conn.commit()
+        elif nm == 'LPI':
+            with open(os.path.join(path,subs+nm+s+c)) as f:
+                dual = os.path.join(str+nm.upper())
+                cur.copy_expert(
+                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                conn.commit()
+
         else:
+            # nm = [x for x in files if x!='lpi']
             # print(os.path.join(path,subs+nm+s+c))
             with open(os.path.join(path,subs+nm+s+c)) as f:
                 dual = os.path.join(str+nm.capitalize())
                 cur.copy_expert(
                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
                 conn.commit()
+
+
+import gdal, gdaltools, os, csv, psycopg2, re
+
+# dropping indicator tables
+class drop_ind(object):
+    # a , if a then 'table1' => drop
+    a = None
+    b = None
+    def drop_(self,drp):
+        if drp == 'a':
+            self.a = 'geo_spe'
+    # import psycopg2, re
+    # from psycopg2 import sql
+    # from temp_tools import config
+    # params = config()
+    # con1 = psycopg2.connect(**params)
+    # cur1 = con1.cursor()
+    # cur1.execute(
+    # sql.SQL("DROP TABLE IF EXISTS gisdb.public.{};").format(sql.Identifier(fk_tbl))
+    # )
+    # con1.commit()
+
+# also could create loop over geo tables
+def drp_ind2():
+    t_list = [] # <- gets list of names
+    seen = None # <- empty set used with the conditional
+
+    def all(self):
+        # connecting..
+        import psycopg2, re
+        from temp_tools import config
+        params = config()
+        con1 = psycopg2.connect(**params)
+        cur1 = con1.cursor()
+        # looking up all user-defined tables in db
+        cur1.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
+        table_list = cur1.fetchall()
+        # loop to remove repeats and add cleaned up names to class variable list
+        for tab in table_list:
+            self.seen = set(self.t_list)
+            if tab not in self.seen:
+                self.seen.add(re.search(r"\(\'(.*?)\'\,\)",str(tab)).group(1))
+                self.t_list.append(re.search(r"\(\'(.*?)\'\,\)",str(tab)).group(1))
+
+# simultaneous schema creation + ingestion
+
+tlist = tbl_list()
+tlist.all()
+tlist.t_list
+
+s = 'height'
+print(s for s in tlist.t_list if sub in s)
+
+
+
+def ind_tbls():
+    ogr = gdaltools.ogr2ogr()
+    gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
+    ogr.set_encoding("UTF-8")
+    ogr.set_input(os.path.join(path,'species_geojson.geojson'),srs="EPSG:4326")
