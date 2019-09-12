@@ -20,6 +20,23 @@ def config(filename='database.ini', section='postgresql'):
 
     return db
 
+def geoconfig(filename='database.ini', section='geo'):
+    # create a parser
+    parser = ConfigParser()
+    # read config file
+    parser.read(filename)
+
+    # get section, default to postgresql
+    db = {}
+    if parser.has_section(section):
+        params = parser.items(section)
+        for param in params:
+            db[param[0]] = param[1]
+    else:
+        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
+
+    return db
+
 # tool to loop and bring all table names
 class tbl_list():
     # empty class variables that will be defined with the 'all' method
@@ -342,9 +359,117 @@ def drp_ind2(tbl,posx):
            con1.commit()
 
 
+def name_q(table_name,which_column,newname):
+    from psycopg2 import sql
+    from temp_tools import config
+    import psycopg2
+    params = config()
+    con1 = psycopg2.connect(**params)
+    cur1 = con1.cursor()
+    # could be better if arguments could skip 'wrong' colnames
+    cur1.execute(
+        sql.SQL("ALTER TABLE gisdb.public.{0} RENAME COLUMN {1} TO {2}").format(sql.Identifier(table_name),
+        sql.Identifier(which_column),
+        sql.Identifier(newname)))
+    con1.commit()
 
-def ind_tbls():
+
+# choose which geo table to create in params
+def ind_tbls(params=None):
+    import psycopg2, gdaltools,os, geopandas as gpd
+    from temp_tools import geoconfig, name_q
+    path = "C:\\Users\\kbonefont.JER-PC-CLIMATE4\\Downloads\\AIM_data\\"
     ogr = gdaltools.ogr2ogr()
     gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
-    ogr.set_encoding("UTF-8")
-    ogr.set_input(os.path.join(path,'species_geojson.geojson'),srs="EPSG:4326")
+
+
+    which = None
+    choice = {'spe':'species_geojson.geojson','ind':'indicators_geojson.geojson'}
+    if params is not None:
+        if params == 'spe':
+
+            # create schema + ingest
+            conf = geoconfig()
+            ogr = gdaltools.ogr2ogr()
+            which = choice.get('spe')
+            ogr.set_encoding("UTF-8")
+            ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
+            ogr.geom_type = 'POINT'
+            con = gdaltools.PgConnectionString(**conf)
+            ogr.set_output(con, table_name="geoSpe") # needs uppercase..
+            print(which+' table with geometry created. \n')
+            ogr.execute()
+            # change column names
+            param = config()
+            con1 = psycopg2.connect(**param)
+            cur1 = con1.cursor()
+
+            # specifying exceptions (complex cases/camelcase)
+            fname=os.path.join(path,'species_geojson.geojson')
+            df1 = gpd.read_file(fname)
+            for col in df1.columns:
+                if col.lower() == 'primarykey':
+                    name_q("geospe", col.lower(),'PrimaryKey')
+
+                elif col.lower() == 'plotid':
+                    name_q("geospe", col.lower(),'PlotID')
+
+                elif col.lower() == 'ah_speciescover':
+                    name_q("geospe", col.lower(),'AH_SpeciesCover')
+
+                elif col.lower() == 'hgt_species_avg':
+                    name_q("geospe", col.lower(),'Hgt_Species_Avg')
+
+                elif col.lower() == 'ah_speciescover_n':
+                    name_q("geospe", col.lower(),'AH_SpeciesCover_n')
+
+                elif col.lower() == 'hgt_species_avg_n':
+                    name_q("geospe", col.lower(),'Hgt_Species_Avg_n')
+
+                elif col.lower() == 'growthhabit':
+                    name_q("geospe", col.lower(),'GrowthHabit')
+
+                elif col.lower() == 'growthhabitsub':
+                    name_q("geospe", col.lower(),'GrowthHabitSub')
+
+                elif col.lower() == 'sg_group':
+                    name_q("geospe", col.lower(),'SG_Group')
+
+                elif col.lower() == 'speciesstate':
+                    name_q("geospe", col.lower(),'SpeciesState')
+
+                elif col.lower() == 'dbkey':
+                    name_q("geospe", col.lower(),'DBKey')
+
+                elif col.lower() == 'geometry':
+                    pass
+
+                else:
+                    print('colnames fixed')
+                    name_q("geospe", col.lower(), col.capitalize())
+
+            # changing name
+            cur1.execute('ALTER TABLE gisdb.public.geospe RENAME TO "geoSpe";')
+
+            # referencing header
+
+            cur1.execute('ALTER TABLE gisdb.public."geoSpe" ADD CONSTRAINT "geoSpe_PrimaryKey_fkey" FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
+            con1.commit()
+            print('geoSpe table references header')
+
+
+        elif params == 'ind':
+            conf = config()
+            ogr = gdaltools.ogr2ogr()
+            which = choice.get('ind')
+            ogr.set_encoding("UTF-8")
+            ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
+            ogr.geom_type = 'POINT'
+            con = gdaltools.PgConnectionString(**conf)
+            ogr.set_output(con, table_name="geoInd")
+            print(which + ' table wit geometry created.')
+            ogr.execute()
+
+        else:
+            which=None
+            print(which)

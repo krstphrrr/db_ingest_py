@@ -29,6 +29,8 @@ tbl_ingest() # needs ok after each successful csv ingest
 # drop geo table if exists
 from temp_tools import drp_ind2
 drp_ind2('Gap') # would be nice to choose which substring to match
-drp_ind2('data', 0) # done
+drp_ind2('geo', 0) # done
 
 # indicator ingestion
+from temp_tools import ind_tbls
+ind_tbls('spe')
