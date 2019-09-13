@@ -405,48 +405,17 @@ def ind_tbls(params=None):
             cur1 = con1.cursor()
 
             # specifying exceptions (complex cases/camelcase)
-            fname=os.path.join(path,'species_geojson.geojson')
-            df1 = gpd.read_file(fname)
-            for col in df1.columns:
-                if col.lower() == 'primarykey':
-                    name_q("geospe", col.lower(),'PrimaryKey')
-
-                elif col.lower() == 'plotid':
-                    name_q("geospe", col.lower(),'PlotID')
-
-                elif col.lower() == 'ah_speciescover':
-                    name_q("geospe", col.lower(),'AH_SpeciesCover')
-
-                elif col.lower() == 'hgt_species_avg':
-                    name_q("geospe", col.lower(),'Hgt_Species_Avg')
-
-                elif col.lower() == 'ah_speciescover_n':
-                    name_q("geospe", col.lower(),'AH_SpeciesCover_n')
-
-                elif col.lower() == 'hgt_species_avg_n':
-                    name_q("geospe", col.lower(),'Hgt_Species_Avg_n')
-
-                elif col.lower() == 'growthhabit':
-                    name_q("geospe", col.lower(),'GrowthHabit')
-
-                elif col.lower() == 'growthhabitsub':
-                    name_q("geospe", col.lower(),'GrowthHabitSub')
-
-                elif col.lower() == 'sg_group':
-                    name_q("geospe", col.lower(),'SG_Group')
-
-                elif col.lower() == 'speciesstate':
-                    name_q("geospe", col.lower(),'SpeciesState')
-
-                elif col.lower() == 'dbkey':
-                    name_q("geospe", col.lower(),'DBKey')
-
+            fname=os.path.join(path,which)
+            df = gpd.read_file(fname)
+            for col in df.columns:
+                if col.lower() == 'source':
+                    pass
                 elif col.lower() == 'geometry':
                     pass
 
                 else:
                     print('colnames fixed')
-                    name_q("geospe", col.lower(), col.capitalize())
+                    name_q("geospe", col.lower(), col)
 
             # changing name
             cur1.execute('ALTER TABLE gisdb.public.geospe RENAME TO "geoSpe";')
@@ -459,7 +428,7 @@ def ind_tbls(params=None):
 
 
         elif params == 'ind':
-            conf = config()
+            conf = geoconfig()
             ogr = gdaltools.ogr2ogr()
             which = choice.get('ind')
             ogr.set_encoding("UTF-8")
@@ -467,9 +436,32 @@ def ind_tbls(params=None):
             ogr.geom_type = 'POINT'
             con = gdaltools.PgConnectionString(**conf)
             ogr.set_output(con, table_name="geoInd")
-            print(which + ' table wit geometry created.')
+            print(which+' table with geometry created. \n')
             ogr.execute()
 
-        else:
-            which=None
-            print(which)
+            # change column names
+            param = config()
+            con1 = psycopg2.connect(**param)
+            cur1 = con1.cursor()
+
+            # specifying exceptions (complex cases/camelcase)
+            fname=os.path.join(path,which)
+            df = gpd.read_file(fname)
+            for col in df.columns:
+                if col.lower() == 'source':
+                    pass
+                elif col.lower() == 'geometry':
+                    pass
+                else:
+                    print('colnames fixed')
+                    name_q("geoind", col.lower(), col)
+
+
+            # changing name
+            cur1.execute('ALTER TABLE gisdb.public.geoind RENAME TO "geoInd";')
+
+            # referencing header
+
+            cur1.execute('ALTER TABLE gisdb.public."geoInd" ADD CONSTRAINT "geoInd_PrimaryKey_fkey" FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
+            con1.commit()
+            print('geoInd table references header')

@@ -34,3 +34,4 @@ drp_ind2('geo', 0) # done
 # indicator ingestion
 from temp_tools import ind_tbls
 ind_tbls('spe')
+ind_tbls('ind')
