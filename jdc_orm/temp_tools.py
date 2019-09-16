@@ -299,6 +299,8 @@ def tbl_ingest():
                 dual = os.path.join(str+nm.capitalize())
                 cur.copy_expert(
                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                cur1.execute(
+                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
                 conn.commit()
 
         elif nm == 'spp':
@@ -309,6 +311,8 @@ def tbl_ingest():
                 dual = os.path.join(str+nm) # dual = dataSpeciesInventory
                 cur.copy_expert(
                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                cur1.execute(
+                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
                 conn.commit()
 
         elif nm == 'soil':
@@ -319,12 +323,16 @@ def tbl_ingest():
                 dual = os.path.join(str+nm) # dual = dataSpeciesInventory
                 cur.copy_expert(
                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                cur1.execute(
+                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
                 conn.commit()
         elif nm == 'LPI':
             with open(os.path.join(path,subs+nm+s+c)) as f:
                 dual = os.path.join(str+nm.upper())
                 cur.copy_expert(
                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                cur1.execute(
+                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
                 conn.commit()
 
         else:
@@ -334,6 +342,8 @@ def tbl_ingest():
                 dual = os.path.join(str+nm.capitalize())
                 cur.copy_expert(
                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                cur1.execute(
+                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
                 conn.commit()
 
 
@@ -423,6 +433,7 @@ def ind_tbls(params=None):
             # referencing header
 
             cur1.execute('ALTER TABLE gisdb.public."geoSpe" ADD CONSTRAINT "geoSpe_PrimaryKey_fkey" FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
+            # cur1.execute('UPDATE gisdb.public."geoSpe" SET "DateLoadedInDb"=now()' )
             con1.commit()
             print('geoSpe table references header')
 
@@ -463,5 +474,23 @@ def ind_tbls(params=None):
             # referencing header
 
             cur1.execute('ALTER TABLE gisdb.public."geoInd" ADD CONSTRAINT "geoInd_PrimaryKey_fkey" FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
+            cur1.execute('UPDATE gisdb.public."geoInd" SET "DateLoadedInDb"=now()' )
             con1.commit()
             print('geoInd table references header')
+
+
+def currnt(tbl):
+    from datetime import datetime
+    from temp_tools import config
+    from psycopg2 import sql
+    import os,psycopg2
+    param = config()
+    dt = datetime.now()
+    # tbl_list=[]
+    # tbln={}.format(tbl)
+    con1 = psycopg2.connect(**param)
+    cur1 = con1.cursor()
+    # for tbl in tbl_list:
+    cur1.execute(
+     sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(tbl)) )
+    con1.commit()
