@@ -28,7 +28,7 @@ tbl_ingest() # needs ok after each successful csv ingest
 
 # drop geo table if exists
 from temp_tools import drp_ind2
-drp_ind2('Gap')
+
 drp_ind2('geo', 0) # done
 
 # indicator ingestion
