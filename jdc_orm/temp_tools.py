@@ -1,84 +1,124 @@
-# all functions could be methods inside a grouping class
+"""
+This script contains functions and class methods to set up the server using
+psycopg2. Across the whole script, cur and con are shorthand for cursor and
+connection objects respectively.
+
+1. config and geoconfig, parse information inside an ini file to be
+used by other functions that connect to the server.
+
+2. class TableList queries the server using the pull_names method and
+populates an internal attribute (__names) with the names of all the tables
+currently on the server.
+
+2. drop_foreign_keys executes a 'ALTER TABLE..DROP FOREIGN KEY IF EXISTS..'
+SQL query. This enables the table to be modified as its constraints have
+been dropped.
+
+3. drop_tables executes an 'DROP TABLE IF EXISTS..' SQL query. Requires table
+constraints to be dropped.
+
+4. create_tables creates table schemas supplied by an internal variable.
+This variable then supplies a 'CREATE TABLE..' query.
+
+5.
+
+
+"""
 
 from configparser import ConfigParser
 
 
-
-
-
-# connection credentials within .ini
 def config(filename='database.ini', section='postgresql'):
     # create a parser
     parser = ConfigParser()
     # read config file
     parser.read(filename)
 
-    # get section, default to postgresql
+    # get section, index by value in dictionary params
     db = {}
     if parser.has_section(section):
         params = parser.items(section)
         for param in params:
             db[param[0]] = param[1]
     else:
-        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
+        raise Exception('Section {0} not found in the {1} file'.format(
+        section, filename))
 
     return db
 
 def geoconfig(filename='database.ini', section='geo'):
-    # create a parser
     parser = ConfigParser()
-    # read config file
     parser.read(filename)
 
-    # get section, default to postgresql
     db = {}
     if parser.has_section(section):
         params = parser.items(section)
         for param in params:
             db[param[0]] = param[1]
     else:
-        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
-
+        raise Exception('Section {0} not found in the {1} file'.format(
+        section, filename))
     return db
 
 # tool to loop and bring all table names
-class tbl_list():
-    # empty class variables that will be defined with the 'all' method
-    t_list = [] # <- gets list of names
-    seen = None # <- empty set used with the conditional
+class TableList():
 
-    def all(self):
-        # connecting..
+    """ This class creates a list of tables currently in the server.
+    Connection credentials inside .ini file. pull_names method
+    extracts table names and assigns them to the __names class
+    attribute, which initially is just an empty list.
+    """
+    __names = [] # <- gets list of names
+    __seen = None # <- empty set used with the conditional
+
+    def pull_names(self):
+
         import psycopg2, re
         from temp_tools import config
         params = config()
-        con1 = psycopg2.connect(**params)
-        cur1 = con1.cursor()
+        con = psycopg2.connect(**params)
+        cur = con.cursor()
         # looking up all user-defined tables in db
-        cur1.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
-        table_list = cur1.fetchall()
-        # loop to remove repeats and add cleaned up names to class variable list
-        for tab in table_list:
-            self.seen = set(self.t_list)
-            if tab not in self.seen:
-                self.seen.add(re.search(r"\(\'(.*?)\'\,\)",str(tab)).group(1))
-                self.t_list.append(re.search(r"\(\'(.*?)\'\,\)",str(tab)).group(1))
+        cur.execute("""
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        ORDER BY table_name;""")
+        query_results = cur.fetchall()
+
+        for table in query_results:
+            self.__seen = set(self.__names)
+            if table not in self.__seen:
+                self.__seen.add(re.search(r"\(\'(.*?)\'\,\)",
+                str(table)).group(1))
+                self.__names.append(re.search(r"\(\'(.*?)\'\,\)",
+                str(table)).group(1))
 
 
 # function to drop all foreign key constraints
-def drop_fk(fk_tbl):
+def drop_foreign_keys(table):
+
+    """ This function drops all constraints in a table. It relies on
+    postgresql's default naming convention for foreign key constraints.
+    Foreign keys = 'TableName_ColumnName_fkey'. Using a table name
+    supplied as a function argument, it creates a foreign key name and it
+    populates a query with both the constraint name and table name.
+    """
     import psycopg2, re
     from psycopg2 import sql
     from temp_tools import config
     params = config()
-    con1 = psycopg2.connect(**params)
-    cur1 = con1.cursor()
+    con = psycopg2.connect(**params)
+    cur = con.cursor()
     # default foreign key names: tablename_referencedColName_fkey
-    key_str = "{}_PrimaryKey_fkey".format(str(fk_tbl))
-    cur1.execute(
-    sql.SQL('ALTER TABLE gisdb.public.{0} DROP CONSTRAINT IF EXISTS {1}').format(sql.Identifier(fk_tbl),sql.Identifier(key_str))
+    key_str = "{}_PrimaryKey_fkey".format(str(table))
+    cur.execute(
+        sql.SQL("""ALTER TABLE gisdb.public.{0}
+               DROP CONSTRAINT IF EXISTS {1}""").format(
+               sql.Identifier(table),
+               sql.Identifier(key_str))
     )
-    con1.commit()
+    con.commit()
 
 # function to drop all tables
 def drop_tbl(fk_tbl):
@@ -408,6 +448,7 @@ def name_q(table_name,which_column,newname):
 
 
 # choose which geo table to create in params
+# geo Species and geoIndicators
 def ind_tbls(params=None):
     import psycopg2, gdaltools,os, geopandas as gpd
     from temp_tools import geoconfig, name_q
@@ -447,8 +488,8 @@ def ind_tbls(params=None):
                     pass
 
                 else:
-                    print('colnames fixed')
                     name_q("geospe", col.lower(), col)
+            print('Column names fixed.')
 
             # changing name
             cur1.execute('ALTER TABLE gisdb.public.geospe RENAME TO "geoSpe";')
@@ -488,8 +529,9 @@ def ind_tbls(params=None):
                 elif col.lower() == 'geometry':
                     pass
                 else:
-                    print('colnames fixed')
+
                     name_q("geoind", col.lower(), col)
+            print('Column names fixed.')
 
 
             # changing name

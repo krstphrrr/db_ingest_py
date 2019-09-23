@@ -1,21 +1,25 @@
 
-## setup script
-from temp_tools import tbl_list
+import psycopg2
+con = psycopg2.connect()
 
-tlist = tbl_list()
-tlist.all()
-tlist.t_list
+
+## setup script
+from temp_tools import TableList
+
+table_list = TableList()
+table_list.pull_names()
+table_list._table_list__names
 
 ###########################
 
 # drops all foreign keys so tables can be dropped
 from temp_tools import drop_fk
-for tbl in tlist.t_list:
+for tbl in table_list._table_list__names:
     drop_fk(str(tbl))
 
 # drops all public tables found
 from temp_tools import drop_tbl
-for tbl in tlist.t_list:
+for tbl in table_list._table_list__names:
     drop_tbl(tbl)
 
 # all table schemas created simultaneously except those w geometry
