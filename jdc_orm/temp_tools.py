@@ -17,8 +17,7 @@ been dropped.
 3. drop_tables executes an 'DROP TABLE IF EXISTS..' SQL query. Requires table
 constraints to be dropped.
 
-4. create_tables creates table schemas supplied by an internal variable.
-This variable then supplies a 'CREATE TABLE..' query.
+4. create_tables creates table schemas using a 'CREATE TABLE..' query.
 
 5. table_ingest batch uploads all the csv into pg table schemas using the
 copy_expert function.
@@ -534,7 +533,7 @@ def column_name_changer(table_name,which_column,newname):
 def indicator_tables(params=None):
     """
     Takes either 'spe' or 'ind' as arguments to create and ingest
-    data in geojson format, and host it in postgis.
+    data in geojson format, and sends it to postgis.
     """
     import psycopg2, gdaltools,os, geopandas as gpd
     from temp_tools import geoconfig, column_name_changer
