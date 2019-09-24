@@ -20,7 +20,16 @@ constraints to be dropped.
 4. create_tables creates table schemas supplied by an internal variable.
 This variable then supplies a 'CREATE TABLE..' query.
 
-5.
+5. table_ingest batch uploads all the csv into pg table schemas using the
+copy_expert function.
+
+6. drop_indicator used for the selective dropping of tables. It splits up table
+names into two: dataHeader = 'data' + 'Header', so the user chooses by which
+string to filter and which position to filter at.
+
+7. column_name_changer changes column names on a chosen table.
+
+8. indicator_tables creates and ingests tables with a geometry field.
 
 
 """
@@ -29,12 +38,13 @@ from configparser import ConfigParser
 
 
 def config(filename='database.ini', section='postgresql'):
-    # create a parser
+    """
+    Uses the configpaser module to read .ini and return a dictionary of
+    credentials
+    """
     parser = ConfigParser()
-    # read config file
     parser.read(filename)
 
-    # get section, index by value in dictionary params
     db = {}
     if parser.has_section(section):
         params = parser.items(section)
@@ -47,6 +57,9 @@ def config(filename='database.ini', section='postgresql'):
     return db
 
 def geoconfig(filename='database.ini', section='geo'):
+    """
+    Same as config but reads another section.
+    """
     parser = ConfigParser()
     parser.read(filename)
 
@@ -60,16 +73,16 @@ def geoconfig(filename='database.ini', section='geo'):
         section, filename))
     return db
 
-# tool to loop and bring all table names
-class TableList():
 
-    """ This class creates a list of tables currently in the server.
+class TableList():
+    """
+    This class creates a list of tables currently in the server.
     Connection credentials inside .ini file. pull_names method
     extracts table names and assigns them to the __names class
     attribute, which initially is just an empty list.
     """
-    __names = [] # <- gets list of names
-    __seen = None # <- empty set used with the conditional
+    __names = []
+    __seen = None
 
     def pull_names(self):
 
@@ -95,10 +108,10 @@ class TableList():
                 str(table)).group(1))
 
 
-# function to drop all foreign key constraints
-def drop_foreign_keys(table):
 
-    """ This function drops all constraints in a table. It relies on
+def drop_foreign_keys(table):
+    """
+    This function drops all constraints in a table. It relies on
     postgresql's default naming convention for foreign key constraints.
     Foreign keys = 'TableName_ColumnName_fkey'. Using a table name
     supplied as a function argument, it creates a foreign key name and it
@@ -110,7 +123,7 @@ def drop_foreign_keys(table):
     params = config()
     con = psycopg2.connect(**params)
     cur = con.cursor()
-    # default foreign key names: tablename_referencedColName_fkey
+
     key_str = "{}_PrimaryKey_fkey".format(str(table))
     cur.execute(
         sql.SQL("""ALTER TABLE gisdb.public.{0}
@@ -120,190 +133,198 @@ def drop_foreign_keys(table):
     )
     con.commit()
 
-# function to drop all tables
-def drop_tbl(fk_tbl):
+
+def drop_table(table):
+    """
+    Drops the table used as an argument executing a
+    "DROP TABLE IF EXISTS.." query.
+    """
     import psycopg2, re
     from psycopg2 import sql
     from temp_tools import config
+
     params = config()
-    con1 = psycopg2.connect(**params)
-    cur1 = con1.cursor()
-    cur1.execute(
-    sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(sql.Identifier(fk_tbl))
+    con = psycopg2.connect(**params)
+    cur = con1.cursor()
+    cur.execute(
+        sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(
+                 sql.Identifier(table)
     )
-    con1.commit()
+    con.commit()
 
-# function to create all tables
+
 def create_tbls():
+    """
+    Opens a connection, loops through a tuple of "CREATE TABLE.." commands
+    and closes the connection.
+    """
     import psycopg2
-    """ all the tables """
-    commands = ("""CREATE TABLE "dataHeader"(
-           "PrimaryKey" VARCHAR(100) PRIMARY KEY,
-           "SpeciesState" VARCHAR(2),
-           "PlotID" TEXT,
-           "PlotKey" VARCHAR(50),
-           "DBKey" TEXT,
-           "EcologicalSiteId" VARCHAR(50),
-           "Latitude_NAD83" NUMERIC,
-           "Longitude_NAD83" NUMERIC,
-           "State" VARCHAR(2),
-           "County" VARCHAR(50),
-           "DateEstablished" DATE,
-           "DateLoadedInDb" DATE,
-           "ProjectName" TEXT,
-           "Source" TEXT,
-           "LocationType" VARCHAR(20),
-           "DateVisited" DATE,
-           "Elevation" NUMERIC,
-           "PercentCoveredByEcoSite" NUMERIC);""",
+    commands = (
+    """ CREATE TABLE "dataHeader"(
+    "PrimaryKey" VARCHAR(100) PRIMARY KEY,
+    "SpeciesState" VARCHAR(2),
+    "PlotID" TEXT,
+    "PlotKey" VARCHAR(50),
+    "DBKey" TEXT,
+    "EcologicalSiteId" VARCHAR(50),
+    "Latitude_NAD83" NUMERIC,
+    "Longitude_NAD83" NUMERIC,
+    "State" VARCHAR(2),
+    "County" VARCHAR(50),
+    "DateEstablished" DATE,
+    "DateLoadedInDb" DATE,
+    "ProjectName" TEXT,
+    "Source" TEXT,
+    "LocationType" VARCHAR(20),
+    "DateVisited" DATE,
+    "Elevation" NUMERIC,
+    "PercentCoveredByEcoSite" NUMERIC);""","""CREATE TABLE "dataGap"(
+    "LineKey" VARCHAR(100),
+    "RecKey" VARCHAR(100),
+    "DateModified" DATE,
+    "FormType" TEXT,
+    "FormDate" DATE,
+    "Observer" TEXT,
+    "Recorder" TEXT,
+    "DataEntry" TEXT,
+    "DataErrorChecking" TEXT,
+    "Direction"NUMERIC,
+    "Measure" INT,
+    "LineLengthAmount" NUMERIC,
+    "GapMin" NUMERIC,
+    "GapData" INT,
+    "PerennialsCanopy" INT,
+    "AnnualGrassesCanopy" INT,
+    "AnnualForbsCanopy" INT,
+    "OtherCanopy" INT,
+    "Notes" TEXT,
+    "NoCanopyGaps" INT,
+    "NoBasalGaps" INT,
+    "DateLoadedInDb" DATE,
+    "PerennialsBasal" INT,
+    "AnnualGrassesBasal" INT,
+    "AnnualForbsBasal" INT,
+    "OtherBasal" INT,
+    "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+    "DBKey" TEXT,
+    "SeqNo" TEXT,
+    "RecType" TEXT,
+    "GapStart" NUMERIC,
+    "GapEnd" NUMERIC,
+    "Gap" NUMERIC,
+    "Source" TEXT);""",
 
-        """CREATE TABLE "dataGap"(
-           "LineKey" VARCHAR(100),
-           "RecKey" VARCHAR(100),
-           "DateModified" DATE,
-           "FormType" TEXT,
-           "FormDate" DATE,
-           "Observer" TEXT,
-           "Recorder" TEXT,
-           "DataEntry" TEXT,
-           "DataErrorChecking" TEXT,
-           "Direction"NUMERIC,
-           "Measure" INT,
-           "LineLengthAmount" NUMERIC,
-           "GapMin" NUMERIC,
-           "GapData" INT,
-           "PerennialsCanopy" INT,
-           "AnnualGrassesCanopy" INT,
-           "AnnualForbsCanopy" INT,
-           "OtherCanopy" INT,
-           "Notes" TEXT,
-           "NoCanopyGaps" INT,
-           "NoBasalGaps" INT,
-           "DateLoadedInDb" DATE,
-           "PerennialsBasal" INT,
-           "AnnualGrassesBasal" INT,
-           "AnnualForbsBasal" INT,
-           "OtherBasal" INT,
-           "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
-           "DBKey" TEXT,
-           "SeqNo" TEXT,
-           "RecType" TEXT,
-           "GapStart" NUMERIC,
-           "GapEnd" NUMERIC,
-           "Gap" NUMERIC,
-           "Source" TEXT);""",
+    """ CREATE TABLE "dataLPI"(
+    "LineKey" VARCHAR(100),
+    "RecKey" VARCHAR(100),
+    "DateModified" DATE,
+    "FormType" TEXT,
+    "FormDate" DATE,
+    "Observer" TEXT,
+    "Recorder" TEXT,
+    "DataEntry" TEXT,
+    "DataErrorChecking" TEXT,
+    "Direction" VARCHAR(50),
+    "Measure" INT,
+    "LineLengthAmount" NUMERIC,
+    "SpacingIntervalAmount" NUMERIC,
+    "SpacingType" TEXT,
+    "HeightOption" TEXT,
+    "HeightUOM" TEXT,
+    "ShowCheckbox" INT,
+    "CheckboxLabel" TEXT,
+    "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+    "DBKey" TEXT,
+    "PointLoc" NUMERIC,
+    "PointNbr" INT,
+    "ShrubShape" TEXT,
+    "layer" TEXT,
+    "code" TEXT,
+    "chckbox" INT,
+    "Source" TEXT);""",
 
-        """CREATE TABLE "dataLPI"(
-            "LineKey" VARCHAR(100),
-            "RecKey" VARCHAR(100),
-            "DateModified" DATE,
-            "FormType" TEXT,
-            "FormDate" DATE,
-            "Observer" TEXT,
-            "Recorder" TEXT,
-            "DataEntry" TEXT,
-            "DataErrorChecking" TEXT,
-            "Direction" VARCHAR(50),
-            "Measure" INT,
-            "LineLengthAmount" NUMERIC,
-            "SpacingIntervalAmount" NUMERIC,
-            "SpacingType" TEXT,
-            "HeightOption" TEXT,
-            "HeightUOM" TEXT,
-            "ShowCheckbox" INT,
-            "CheckboxLabel" TEXT,
-            "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
-            "DBKey" TEXT,
-            "PointLoc" NUMERIC,
-            "PointNbr" INT,
-            "ShrubShape" TEXT,
-            "layer" TEXT,
-            "code" TEXT,
-            "chckbox" INT,
-            "Source" TEXT);""",
+    """ CREATE TABLE "dataHeight"(
+    "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+    "DBKey" TEXT,
+    "PointLoc" NUMERIC,
+    "PointNbr" INT,
+    "RecKey" VARCHAR(100),
+    "Height" NUMERIC,
+    "Species" TEXT,
+    "Chkbox" INT,
+    "type" TEXT,
+    "GrowthHabit_measured" TEXT,
+    "LineKey" VARCHAR(100),
+    "DateModified" DATE,
+    "FormType" TEXT,
+    "FormDate" DATE,
+    "Observer" TEXT,
+    "Recorder" TEXT,
+    "DataEntry" TEXT,
+    "DataErrorChecking" TEXT,
+    "Direction" VARCHAR(100),
+    "Measure" INT,
+    "LineLengthAmount" NUMERIC,
+    "SpacingIntervalAmount" NUMERIC,
+    "SpacingType" TEXT,
+    "HeightOption" TEXT,
+    "HeightUOM" TEXT,
+    "ShowCheckbox" INT,
+    "CheckboxLabel" TEXT,
+    "Source" TEXT,
+    "UOM" TEXT);""",
 
-        """ CREATE TABLE "dataHeight"(
-            "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
-            "DBKey" TEXT,
-            "PointLoc" NUMERIC,
-            "PointNbr" INT,
-            "RecKey" VARCHAR(100),
-            "Height" NUMERIC,
-            "Species" TEXT,
-            "Chkbox" INT,
-            "type" TEXT,
-            "GrowthHabit_measured" TEXT,
-            "LineKey" VARCHAR(100),
-            "DateModified" DATE,
-            "FormType" TEXT,
-            "FormDate" DATE,
-            "Observer" TEXT,
-            "Recorder" TEXT,
-            "DataEntry" TEXT,
-            "DataErrorChecking" TEXT,
-            "Direction" VARCHAR(100),
-            "Measure" INT,
-            "LineLengthAmount" NUMERIC,
-            "SpacingIntervalAmount" NUMERIC,
-            "SpacingType" TEXT,
-            "HeightOption" TEXT,
-            "HeightUOM" TEXT,
-            "ShowCheckbox" INT,
-            "CheckboxLabel" TEXT,
-            "Source" TEXT,
-            "UOM" TEXT);""",
+    """ CREATE TABLE "dataSoilStability"(
+    "PlotKey" VARCHAR(100),
+    "RecKey" VARCHAR(100),
+    "DateModified" DATE,
+    "FormType" TEXT,
+    "FormDate" DATE,
+    "LineKey" VARCHAR(100),
+    "Observer" TEXT,
+    "Recorder" TEXT,
+    "DataEntry" TEXT,
+    "DataErrorChecking" TEXT,
+    "SoilStabSubSurface" INT,
+    "Notes" TEXT,
+    "DateLoadedInDb" DATE,
+    "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+    "DBKey" TEXT,
+    "Position" INT,
+    "Line" VARCHAR(50),
+    "Pos" VARCHAR(50),
+    "Veg" TEXT,
+    "Rating" INT,
+    "Hydro" INT,
+    "Source" TEXT);""",
 
-        """ CREATE TABLE "dataSoilStability"(
-            "PlotKey" VARCHAR(100),
-            "RecKey" VARCHAR(100),
-            "DateModified" DATE,
-            "FormType" TEXT,
-            "FormDate" DATE,
-            "LineKey" VARCHAR(100),
-            "Observer" TEXT,
-            "Recorder" TEXT,
-            "DataEntry" TEXT,
-            "DataErrorChecking" TEXT,
-            "SoilStabSubSurface" INT,
-            "Notes" TEXT,
-            "DateLoadedInDb" DATE,
-            "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
-            "DBKey" TEXT,
-            "Position" INT,
-            "Line" VARCHAR(50),
-            "Pos" VARCHAR(50),
-            "Veg" TEXT,
-            "Rating" INT,
-            "Hydro" INT,
-            "Source" TEXT);""",
-
-        """ CREATE TABLE "dataSpeciesInventory"(
-            "LineKey" VARCHAR(100),
-            "RecKey" VARCHAR(100),
-            "DateModified" DATE,
-            "FormType" TEXT,
-            "FormDate" DATE,
-            "Observer" TEXT,
-            "Recorder" TEXT,
-            "DataEntry" TEXT,
-            "DataErrorChecking" TEXT,
-            "SpecRichMethod" INT,
-            "SpecRichMeasure" INT,
-            "SpecRichNbrSubPlots" INT,
-            "SpecRich1Container" INT,
-            "SpecRich1Shape" INT,
-            "SpecRich1Dim1" NUMERIC,
-            "SpecRich1Dim2" NUMERIC,
-            "SpecRich1Area" NUMERIC,
-            "Notes" TEXT,
-            "DateLoadedInDb" DATE,
-            "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
-            "DBKey" TEXT,
-            "Species" TEXT,
-            "Source" TEXT,
-            "Density" INT);
-                        """
-            )
+    """ CREATE TABLE "dataSpeciesInventory"(
+    "LineKey" VARCHAR(100),
+    "RecKey" VARCHAR(100),
+    "DateModified" DATE,
+    "FormType" TEXT,
+    "FormDate" DATE,
+    "Observer" TEXT,
+    "Recorder" TEXT,
+    "DataEntry" TEXT,
+    "DataErrorChecking" TEXT,
+    "SpecRichMethod" INT,
+    "SpecRichMeasure" INT,
+    "SpecRichNbrSubPlots" INT,
+    "SpecRich1Container" INT,
+    "SpecRich1Shape" INT,
+    "SpecRich1Dim1" NUMERIC,
+    "SpecRich1Dim2" NUMERIC,
+    "SpecRich1Area" NUMERIC,
+    "Notes" TEXT,
+    "DateLoadedInDb" DATE,
+    "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
+    "DBKey" TEXT,
+    "Species" TEXT,
+    "Source" TEXT,
+    "Density" INT);
+    """
+    )
     conn = None
     try:
         params = config()
@@ -323,142 +344,207 @@ def create_tbls():
 
 #####
 
-def tbl_ingest():
+def table_ingest():
+    """
+    Reads csv data and uploads it into appropriate pg table.
+    """
 
-    subs = 'm_subset/'
+    subdir = 'm_subset/'
     path = 'C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/'
-    c = '.csv'
-    s = '_subs'
-    str='data'
+    suffix = '.csv'
+    subfiles = '_subs'
+    prefix='data'
     files = ['header', 'height','gap','spp','soil','LPI']
-    for nm in files:
+    for file in files:
         import os, psycopg2
         from psycopg2 import sql
         params = config()
         conn = psycopg2.connect(**params)
         cur = conn.cursor()
 
-        if nm == 'header':
-            with open(os.path.join(path,nm+c),'r') as f:
-                dual = os.path.join(str+nm.capitalize())
+        if file == 'header':
+            with open(os.path.join(path,file+suffix),'r') as f:
+                camelcase = os.path.join(prefix+file.capitalize())
                 print("Ingesting header..")
                 cur.copy_expert(
-                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                sql.SQL("""
+                COPY gisdb.public.{0}
+                FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
+                sql.Identifier(camelcase)), f)
                 cur.execute(
-                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
+                sql.SQL("""
+                UPDATE gisdb.public.{0}
+                SET "DateLoadedInDb"=now()""").format(
+                sql.Identifier(camelcase)) )
                 conn.commit()
                 print("Header up.")
 
-        elif nm == 'spp':
+        elif file == 'spp':
             a = 'species'
             b = 'inventory'
-            with open(os.path.join(path,subs+nm+s+c),'r') as f: # path/m_subset/x_subs.csv
-                nm = os.path.join(a.capitalize()+b.capitalize()) # nm = SpeciesInventory
-                dual = os.path.join(str+nm) # dual = dataSpeciesInventory
+            with open(os.path.join(path,subdir+file+subfiles+suffix),'r') as f:
+                file = os.path.join(a.capitalize()+b.capitalize())
+                camelcase = os.path.join(prefix+file)
                 print("Ingesting species inventory data..")
                 cur.copy_expert(
-                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                sql.SQL("""
+                COPY gisdb.public.{0}
+                FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
+                sql.Identifier(camelcase)), f)
                 cur.execute(
-                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
+                sql.SQL("""
+                UPDATE gisdb.public.{0}
+                SET "DateLoadedInDb"=now()""").format(
+                sql.Identifier(camelcase)) )
                 conn.commit()
                 print("Species inventory table up.")
 
-        elif nm == 'soil':
+        elif file == 'soil':
             a = 'soil'
             b = 'stability'
-            with open(os.path.join(path,subs+nm+s+c),'r') as f: # path/m_subset/x_subs.csv
-                nm = os.path.join(a.capitalize()+b.capitalize()) # nm = SoilStability
-                dual = os.path.join(str+nm) # dual = dataSpeciesInventory
+            with open(os.path.join(path,
+            subdir+file+subfiles+suffix),'r') as f:
+                file = os.path.join(a.capitalize()+b.capitalize())
+                camelcase = os.path.join(prefix+file)
                 print("Ingesting soil stability data..")
                 cur.copy_expert(
-                sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                sql.SQL("""
+                COPY gisdb.public.{0}
+                FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
+                sql.Identifier(camelcase)), f)
                 cur.execute(
-                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
+                sql.SQL("""
+                UPDATE gisdb.public.{0}
+                SET "DateLoadedInDb"=now()""").format(
+                sql.Identifier(camelcase)) )
                 conn.commit()
                 print("Soil stability table up.")
-        elif nm == 'LPI':
-            with open(os.path.join(path,subs+nm+s+c)) as f:
-                dual = os.path.join(str+nm.upper())
-                print("Ingesting LPI data..")
 
+        elif file == 'LPI':
+            with open(os.path.join(path,
+            subdir+file+subfiles+suffix)) as f:
+                camelcase = os.path.join(prefix+file.upper())
+                print("Ingesting LPI data..")
                 cur.copy_expert(
-                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                 sql.SQL("""
+                 COPY gisdb.public.{0}
+                 FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
+                 sql.Identifier(camelcase)), f)
                 cur.execute(
-                 sql.SQL('ALTER TABLE gisdb.public.{0} DROP COLUMN IF EXISTS "DateLoadedInDb"').format(sql.Identifier(dual)))
+                 sql.SQL("""
+                 ALTER TABLE gisdb.public.{0}
+                 DROP COLUMN IF EXISTS "DateLoadedInDb"""").format(
+                 sql.Identifier(camelcase)))
                 cur.execute(
-                 sql.SQL('ALTER TABLE gisdb.public.{0} ADD COLUMN "DateLoadedInDb" DATE').format(sql.Identifier(dual)))
+                 sql.SQL("""
+                 ALTER TABLE gisdb.public.{0}
+                 ADD COLUMN "DateLoadedInDb" DATE""").format(
+                 sql.Identifier(camelcase)))
                 cur.execute(
-                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
+                 sql.SQL("""
+                 UPDATE gisdb.public.{0}
+                 SET "DateLoadedInDb"=now()""").format(
+                 sql.Identifier(camelcase)) )
                 conn.commit()
                 print("LPI table up.")
 
         else:
-            # nm = [x for x in files if x!='lpi']
-            # print(os.path.join(path,subs+nm+s+c))
-            with open(os.path.join(path,subs+nm+s+c)) as f:
-                dual = os.path.join(str+nm.capitalize())
+            with open(os.path.join(path,
+            subdir+file+subfiles+suffix)) as f:
+                camelcase = os.path.join(prefix+file.capitalize())
                 print("Ingesting height and gap data..")
                 cur.copy_expert(
-                 sql.SQL("COPY gisdb.public.{0} FROM STDIN WITH CSV HEADER NULL \'NA\'").format(sql.Identifier(dual)), f)
+                 sql.SQL("""
+                 COPY gisdb.public.{0}
+                 FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
+                 sql.Identifier(camelcase)), f)
                 cur.execute(
-                 sql.SQL('ALTER TABLE gisdb.public.{0} DROP COLUMN IF EXISTS "DateLoadedInDb"').format(sql.Identifier(dual)))
+                 sql.SQL("""
+                 ALTER TABLE gisdb.public.{0}
+                 DROP COLUMN IF EXISTS "DateLoadedInDb"""").format(
+                 sql.Identifier(camelcase)))
                 cur.execute(
-                 sql.SQL('ALTER TABLE gisdb.public.{0} ADD COLUMN "DateLoadedInDb" DATE').format(sql.Identifier(dual)))
+                 sql.SQL("""
+                 ALTER TABLE gisdb.public.{0}
+                 ADD COLUMN "DateLoadedInDb" DATE""").format(
+                 sql.Identifier(camelcase)))
                 cur.execute(
-                 sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(dual)) )
+                 sql.SQL("""
+                 UPDATE gisdb.public.{0}
+                 SET "DateLoadedInDb"=now()""").format(
+                 sql.Identifier(camelcase)) )
                 conn.commit()
                 print("Height and Gap tables up.")
 
 
-# also could create loop over geo tables; tbl = table name string filter
-def drp_ind2(tbl,posx):
+
+def drop_indicator(prefix,string_position):
+    """
+    Takes as arguments pg table prefix to filter through list of table names,
+    and position in the camelcase names. It uses a "DROP TABLE IF EXISTS.."
+    query to drop the table filtered through the user-defined string and
+    position. Useful for dropping tables with a specific prefix in their
+    name.
+    """
     import psycopg2, re
     from psycopg2 import sql
     from temp_tools import config
-    from temp_tools import tbl_list
-    tlist = tbl_list()
-    tlist.all()
+    from temp_tools import TableList
+    tlist = TableList()
+    tlist.pull_names()
     params = config()
-    # pos = "{}".format(posx)
-    subs = "{}".format(str(tbl))
-    for item in tlist.t_list:
-        if list(filter(None, re.split('([a-z]+)(?=[A-Z])|([A-Z][a-z]+)',item)))[posx] == subs:
+
+    string = "{}".format(str(prefix))
+    for item in tlist._table_list__names:
+        if list(filter(None,
+         re.split('([a-z]+)(?=[A-Z])|([A-Z][a-z]+)',
+         item)))[string_position] == string:
            print(item +' dropped')
-           con1 = psycopg2.connect(**params)
-           cur1 = con1.cursor()
-           cur1.execute(
-           sql.SQL("DROP TABLE IF EXISTS gisdb.public.{};").format(sql.Identifier(item))
+           con = psycopg2.connect(**params)
+           cur = con1.cursor()
+           cur.execute(
+           sql.SQL("DROP TABLE IF EXISTS gisdb.public.{};").format(
+           sql.Identifier(item))
            )
-           con1.commit()
+           con.commit()
 
 
-def name_q(table_name,which_column,newname):
+def column_name_changer(table_name,which_column,newname):
+    """
+    Takes table name, column name and new column name to change a column's
+    name.
+    """
     from psycopg2 import sql
     from temp_tools import config
     import psycopg2
     params = config()
     con1 = psycopg2.connect(**params)
     cur1 = con1.cursor()
-    # could be better if arguments could skip 'wrong' colnames
+
     cur1.execute(
-        sql.SQL("ALTER TABLE gisdb.public.{0} RENAME COLUMN {1} TO {2}").format(sql.Identifier(table_name),
+        sql.SQL("""
+        ALTER TABLE gisdb.public.{0}
+        RENAME COLUMN {1} TO {2}""").format(
+        sql.Identifier(table_name),
         sql.Identifier(which_column),
         sql.Identifier(newname)))
     con1.commit()
 
 
-# choose which geo table to create in params
-# geo Species and geoIndicators
-def ind_tbls(params=None):
+def indicator_tables(params=None):
+    """
+    Takes either 'spe' or 'ind' as arguments to create and ingest
+    data in geojson format, and host it in postgis.
+    """
     import psycopg2, gdaltools,os, geopandas as gpd
-    from temp_tools import geoconfig, name_q
+    from temp_tools import geoconfig, column_name_changer
     path = "C:\\Users\\kbonefont.JER-PC-CLIMATE4\\Downloads\\AIM_data\\"
     ogr = gdaltools.ogr2ogr()
     gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
 
-
     which = None
-    choice = {'spe':'species_geojson.geojson','ind':'indicators_geojson.geojson'}
+    choice = {'spe':'species_geojson.geojson',
+    'ind':'indicators_geojson.geojson'}
     if params is not None:
         if params == 'spe':
 
@@ -470,13 +556,13 @@ def ind_tbls(params=None):
             ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
             ogr.geom_type = 'POINT'
             con = gdaltools.PgConnectionString(**conf)
-            ogr.set_output(con, table_name="geoSpe") # needs uppercase..
+            ogr.set_output(con, table_name="geospe")
             print(which+' table with geometry created. \n')
             ogr.execute()
-            # change column names
+
             param = config()
-            con1 = psycopg2.connect(**param)
-            cur1 = con1.cursor()
+            conn = psycopg2.connect(**param)
+            cur = conn.cursor()
 
             # specifying exceptions (complex cases/camelcase)
             fname=os.path.join(path,which)
@@ -486,21 +572,29 @@ def ind_tbls(params=None):
                     pass
                 elif col.lower() == 'geometry':
                     pass
-
                 else:
                     name_q("geospe", col.lower(), col)
             print('Column names fixed.')
 
             # changing name
-            cur1.execute('ALTER TABLE gisdb.public.geospe RENAME TO "geoSpe";')
+            cur.execute("""
+            ALTER TABLE gisdb.public.geospe
+            RENAME TO "geoSpeciesInventory";""")
 
             # referencing header
-
-            cur1.execute('ALTER TABLE gisdb.public."geoSpe" ADD CONSTRAINT "geoSpe_PrimaryKey_fkey" FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
-            cur1.execute('ALTER TABLE gisdb.public."geoSpe" ADD COLUMN "DateLoadedInDb" DATE' )
-            cur1.execute('UPDATE gisdb.public."geoSpe" SET "DateLoadedInDb"=now()')
-            con1.commit()
-            print('geoSpe table references header')
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoSpeciesInventory"
+            ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
+            FOREIGN KEY ("PrimaryKey")
+            REFERENCES "dataHeader" ("PrimaryKey");""")
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoSpeciesInventory"
+            ADD COLUMN "DateLoadedInDb" DATE""")
+            cur.execute("""
+            UPDATE gisdb.public."geoSpeciesInventory"
+            SET "DateLoadedInDb"=now()""")
+            conn.commit()
+            print('geoSpeciesInventory table references header')
 
 
         elif params == 'ind':
@@ -511,14 +605,14 @@ def ind_tbls(params=None):
             ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
             ogr.geom_type = 'POINT'
             con = gdaltools.PgConnectionString(**conf)
-            ogr.set_output(con, table_name="geoInd")
-            print(which+' table with geometry created. \n')
+            ogr.set_output(con, table_name="geoind")
+            print(which + ' table with geometry created. \n')
             ogr.execute()
 
             # change column names
             param = config()
-            con1 = psycopg2.connect(**param)
-            cur1 = con1.cursor()
+            conn = psycopg2.connect(**param)
+            cur = conn.cursor()
 
             # specifying exceptions (complex cases/camelcase)
             fname=os.path.join(path,which)
@@ -529,34 +623,25 @@ def ind_tbls(params=None):
                 elif col.lower() == 'geometry':
                     pass
                 else:
-
                     name_q("geoind", col.lower(), col)
             print('Column names fixed.')
 
 
             # changing name
-            cur1.execute('ALTER TABLE gisdb.public.geoind RENAME TO "geoInd";')
+            cur.execute("""
+            ALTER TABLE gisdb.public.geoind
+            RENAME TO "geoIndicators";""")
 
             # referencing header
-
-            cur1.execute('ALTER TABLE gisdb.public."geoInd" ADD CONSTRAINT "geoInd_PrimaryKey_fkey" FOREIGN KEY ("PrimaryKey") REFERENCES "dataHeader" ("PrimaryKey");')
-            cur1.execute('UPDATE gisdb.public."geoInd" SET "DateLoadedInDb"=now()' )
-            con1.commit()
-            print('geoInd table references header')
-
-
-def currnt(tbl):
-    from datetime import datetime
-    from temp_tools import config
-    from psycopg2 import sql
-    import os,psycopg2
-    param = config()
-    dt = datetime.now()
-    # tbl_list=[]
-    # tbln={}.format(tbl)
-    con1 = psycopg2.connect(**param)
-    cur1 = con1.cursor()
-    # for tbl in tbl_list:
-    cur1.execute(
-     sql.SQL('UPDATE gisdb.public.{0} SET "DateLoadedInDb"=now()').format(sql.Identifier(tbl)) )
-    con1.commit()
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoIndicators"
+            ADD CONSTRAINT "geoInd_PrimaryKey_fkey"
+            FOREIGN KEY ("PrimaryKey")
+            REFERENCES "dataHeader" ("PrimaryKey");""")
+            cur.execute("""
+            UPDATE gisdb.public."geoIndicators"
+            SET "DateLoadedInDb"=now()""" )
+            conn.commit()
+            print('geoIndicators table references header')
+        else:
+            print("requires parameters")

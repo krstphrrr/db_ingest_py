@@ -30,6 +30,16 @@ cur = conn.cursor()
 conn.commit()
 
 
+
+cur.columns()
+
+
+
+
+
+
+
+
 # header table: drop constraints > drop table > create schema > populate
 
 ## table name extraction
