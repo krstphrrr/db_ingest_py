@@ -1,44 +1,37 @@
-
-import psycopg2
-con = psycopg2.connect()
-
-
-## setup script
-from temp_tools import TableList
+"""
+Use this script to setup db.
+"""
+from tools import TableList
 
 table_list = TableList()
 table_list.pull_names()
-table_list._table_list__names
+table_list._table_list__names # <= list that holds current postgres db tables
 
-###########################
+
 
 # drops all foreign keys so tables can be dropped
-from temp_tools import drop_fk
-for tbl in table_list._table_list__names:
-    drop_fk(str(tbl))
+from tools import drop_foreign_keys
+for table in table_list._table_list__names:
+    drop_foreign_keys(str(table))
 
 # drops all public tables found
 from temp_tools import drop_tbl
-for tbl in table_list._table_list__names:
-    drop_tbl(tbl)
+for table in table_list._table_list__names:
+    drop_table(table)
 
 # all table schemas created simultaneously except those w geometry
-from temp_tools import create_tbls
-create_tbls() # needs actual names
+from tools import create_tbles
+create_tbls() 
 
 # data ingestion
-from temp_tools import tbl_ingest
-tbl_ingest() # needs ok after each successful csv ingest
+from tools import tbl_ingest
+table_ingest() 
 
-# drop geo table if exists
-from temp_tools import drp_ind2
-
-drp_ind2('geo', 0) # done
+# optional function to drop specific tables
+from tools import drp_ind2
+drp_ind2(None, None) 
 
 # indicator ingestion
-from temp_tools import ind_tbls
+from tools import indicator_tables
 ind_tbls('spe')
 ind_tbls('ind')
-
-# from temp_tools import currnt
-# currnt("dataHeader")
