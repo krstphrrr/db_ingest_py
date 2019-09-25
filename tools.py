@@ -3,7 +3,7 @@ This script contains functions and class methods to set up the server using
 psycopg2. Across the whole script, cur and con are shorthand for cursor and
 connection objects respectively.
 
-1. config and geoconfig, parse information inside an ini file to be
+1. config and geoconfig, parse information inside a local ini file to be
 used by other functions that connect to the server.
 
 2. class TableList queries the server using the pull_names method and
@@ -11,7 +11,7 @@ populates an internal attribute (__names) with the names of all the tables
 currently on the server.
 
 2. drop_foreign_keys executes a 'ALTER TABLE..DROP FOREIGN KEY IF EXISTS..'
-SQL query. This enables the table to be modified as its constraints have
+SQL query. This enables the pg table to be modified as its constraints have
 been dropped.
 
 3. drop_tables executes an 'DROP TABLE IF EXISTS..' SQL query. Requires table
@@ -20,10 +20,10 @@ constraints to be dropped.
 4. create_tables creates table schemas using a 'CREATE TABLE..' query.
 
 5. table_ingest batch uploads all the csv into pg table schemas using the
-copy_expert function.
+copy_expert/insert function.
 
-6. drop_indicator used for the selective dropping of tables. It splits up table
-names into two: dataHeader = 'data' + 'Header', so the user chooses by which
+6. drop_indicator is used for the selective dropping of tables. It splits up table
+names into two: ex. dataHeader = 'data' + 'Header', so the user chooses by which
 string to filter and which position to filter at.
 
 7. column_name_changer changes column names on a chosen table.
