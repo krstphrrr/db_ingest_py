@@ -83,10 +83,11 @@ class TableList():
     __names = []
     __seen = None
 
+
     def pull_names(self):
 
         import psycopg2, re
-        from temp_tools import config
+        from tools import config
         params = config()
         con = psycopg2.connect(**params)
         cur = con.cursor()
@@ -118,18 +119,23 @@ def drop_foreign_keys(table):
     """
     import psycopg2, re
     from psycopg2 import sql
-    from temp_tools import config
+    from tools import config
     params = config()
     con = psycopg2.connect(**params)
     cur = con.cursor()
 
     key_str = "{}_PrimaryKey_fkey".format(str(table))
-    cur.execute(
-        sql.SQL("""ALTER TABLE gisdb.public.{0}
-               DROP CONSTRAINT IF EXISTS {1}""").format(
-               sql.Identifier(table),
-               sql.Identifier(key_str))
-    )
+    print('try: dropping keys...')
+    try:
+        cur.execute(
+            sql.SQL("""ALTER TABLE gisdb.public.{0}
+                   DROP CONSTRAINT IF EXISTS {1}""").format(
+                   sql.Identifier(table),
+                   sql.Identifier(key_str))
+        )
+    except Exception as e:
+        print(e)
+    print('Foreign keys dropped')
     con.commit()
 
 
@@ -140,14 +146,14 @@ def drop_table(table):
     """
     import psycopg2, re
     from psycopg2 import sql
-    from temp_tools import config
+    from tools import config
 
     params = config()
     con = psycopg2.connect(**params)
-    cur = con1.cursor()
+    cur = con.cursor()
     cur.execute(
         sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(
-                 sql.Identifier(table)
+                 sql.Identifier(table))
     )
     con.commit()
 
@@ -432,7 +438,8 @@ def table_ingest():
                 cur.execute(
                  sql.SQL("""
                  ALTER TABLE gisdb.public.{0}
-                 DROP COLUMN IF EXISTS "DateLoadedInDb"""").format(
+                 DROP COLUMN IF EXISTS "DateLoadedInDb"
+                 """).format(
                  sql.Identifier(camelcase)))
                 cur.execute(
                  sql.SQL("""
@@ -460,7 +467,8 @@ def table_ingest():
                 cur.execute(
                  sql.SQL("""
                  ALTER TABLE gisdb.public.{0}
-                 DROP COLUMN IF EXISTS "DateLoadedInDb"""").format(
+                 DROP COLUMN IF EXISTS "DateLoadedInDb"
+                 """).format(
                  sql.Identifier(camelcase)))
                 cur.execute(
                  sql.SQL("""
@@ -483,29 +491,35 @@ def drop_indicator(prefix,string_position):
     and position in the camelcase names. It uses a "DROP TABLE IF EXISTS.."
     query to drop the table filtered through the user-defined string and
     position. Useful for dropping tables with a specific prefix in their
-    name.
+    name. ex..
     """
     import psycopg2, re
     from psycopg2 import sql
-    from temp_tools import config
-    from temp_tools import TableList
+    from tools import config
+    from tools import TableList
     tlist = TableList()
     tlist.pull_names()
     params = config()
 
     string = "{}".format(str(prefix))
-    for item in tlist._table_list__names:
+    for item in tlist._TableList__names:
         if list(filter(None,
-         re.split('([a-z]+)(?=[A-Z])|([A-Z][a-z]+)',
-         item)))[string_position] == string:
-           print(item +' dropped')
-           con = psycopg2.connect(**params)
-           cur = con1.cursor()
-           cur.execute(
-           sql.SQL("DROP TABLE IF EXISTS gisdb.public.{};").format(
-           sql.Identifier(item))
-           )
-           con.commit()
+        re.split('([a-z]+)(?=[A-Z])|([A-Z][a-z]+)',
+        item)))[string_position] == string:
+            try:
+                print(item +' dropped')
+                con = psycopg2.connect(**params)
+                cur = con.cursor()
+                cur.execute(
+                sql.SQL("DROP TABLE IF EXISTS gisdb.public.{};").format(
+                sql.Identifier(item))
+            )
+                con.commit()
+            except Exception as e:
+                print(e)
+
+
+
 
 
 def column_name_changer(table_name,which_column,newname):
@@ -514,20 +528,20 @@ def column_name_changer(table_name,which_column,newname):
     name.
     """
     from psycopg2 import sql
-    from temp_tools import config
+    from tools import config
     import psycopg2
     params = config()
-    con1 = psycopg2.connect(**params)
-    cur1 = con1.cursor()
+    con = psycopg2.connect(**params)
+    cur = con.cursor()
 
-    cur1.execute(
+    cur.execute(
         sql.SQL("""
         ALTER TABLE gisdb.public.{0}
         RENAME COLUMN {1} TO {2}""").format(
         sql.Identifier(table_name),
         sql.Identifier(which_column),
         sql.Identifier(newname)))
-    con1.commit()
+    con.commit()
 
 
 def indicator_tables(params=None):
@@ -536,7 +550,7 @@ def indicator_tables(params=None):
     data in geojson format, and sends it to postgis.
     """
     import psycopg2, gdaltools,os, geopandas as gpd
-    from temp_tools import geoconfig, column_name_changer
+    from tools import geoconfig, column_name_changer
     path = "C:\\Users\\kbonefont.JER-PC-CLIMATE4\\Downloads\\AIM_data\\"
     ogr = gdaltools.ogr2ogr()
     gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
@@ -572,7 +586,7 @@ def indicator_tables(params=None):
                 elif col.lower() == 'geometry':
                     pass
                 else:
-                    name_q("geospe", col.lower(), col)
+                    column_name_changer("geospe", col.lower(), col)
             print('Column names fixed.')
 
             # changing name
@@ -622,7 +636,7 @@ def indicator_tables(params=None):
                 elif col.lower() == 'geometry':
                     pass
                 else:
-                    name_q("geoind", col.lower(), col)
+                    column_name_changer("geoind", col.lower(), col)
             print('Column names fixed.')
 
 
