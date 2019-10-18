@@ -183,7 +183,9 @@ def create_tbls():
     "LocationType" VARCHAR(20),
     "DateVisited" DATE,
     "Elevation" NUMERIC,
-    "PercentCoveredByEcoSite" NUMERIC);""","""CREATE TABLE "dataGap"(
+    "PercentCoveredByEcoSite" NUMERIC);""",
+
+    """CREATE TABLE "dataGap"(
     "LineKey" VARCHAR(100),
     "RecKey" VARCHAR(100),
     "DateModified" DATE,
@@ -217,7 +219,11 @@ def create_tbls():
     "GapStart" NUMERIC,
     "GapEnd" NUMERIC,
     "Gap" NUMERIC,
-    "Source" TEXT);""",
+    "State" TEXT,
+    "PlotKey" TEXT,
+    "Source" TEXT,
+    "STATE" TEXT,
+    "PLOTKEY" TEXT);""",
 
     """ CREATE TABLE "dataLPI"(
     "LineKey" VARCHAR(100),
@@ -326,8 +332,16 @@ def create_tbls():
     "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
     "DBKey" TEXT,
     "Species" TEXT,
-    "Source" TEXT,
-    "Density" INT);
+    "source" TEXT,
+    "Density" INT,
+    "Plotkey" TEXT,
+    "Position" TEXT,
+    "Veg" TEXT,
+    "Line" TEXT,
+    "Hydro" TEXT,
+    "SoilStabSubSurface" TEXT,
+    "Pos" TEXT,
+    "Rating" TEXT);
     """
     )
     conn = None
