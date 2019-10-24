@@ -10,6 +10,7 @@ cur = con.cursor()
 # df.columns[2] in gap.columns
 filename = askopenfilename()
 print(filename)
+
 if filename.endswith(".csv"):
     missing=dict()
     extra=dict()
@@ -105,7 +106,7 @@ elif filename.endswith(".geojson"):
             geospe = pd.read_sql_query('SELECT * FROM gisdb.public."geoSpeciesInventory" LIMIT 1;', con)
         except Exception as e:
             print(e)
-            
+
         for col in geodf.columns:
             if col not in geospe.columns:
                 #missing_list = []
