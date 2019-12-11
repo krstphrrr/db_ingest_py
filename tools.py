@@ -1,5 +1,5 @@
 """
-This script contains functions and class methods to set up the server using
+This script contains functions and class methods drto set up the server using
 psycopg2. Across the whole script, cur and con are shorthand for cursor and
 connection objects respectively.
 
@@ -34,6 +34,12 @@ string to filter and which position to filter at.
 """
 
 from configparser import ConfigParser
+from psycopg2 import connect, sql
+from psycopg2.pool import SimpleConnectionPool
+from pandas import read_sql_query
+from psycopg2 import connect, sql
+from os import chdir, getcwd
+from os.path import abspath, join
 
 
 def config(filename='database.ini', section='postgresql'):
@@ -516,10 +522,10 @@ def drop_indicator(prefix,string_position):
     params = config()
 
     string = "{}".format(str(prefix))
+
     for item in tlist._TableList__names:
-        if list(filter(None,
-        re.split('([a-z]+)(?=[A-Z])|([A-Z][a-z]+)',
-        item)))[string_position] == string:
+
+        if list(filter(None, re.split('([a-z]+)(?=[A-Z])|([A-Z][a-z]+)', item)))[string_position] == string:
             try:
                 print(item +' dropped')
                 con = psycopg2.connect(**params)
@@ -532,21 +538,31 @@ def drop_indicator(prefix,string_position):
             except Exception as e:
                 print(e)
 
+class db:
+    params = config()
+    # str = connect(**params)
+    str_1 = SimpleConnectionPool(minconn=1,maxconn=5,**params)
+    str = str_1.getconn()
 
+    def __init__(self):
 
+        self._conn = connect(**params)
+        self._cur= self._conn.cursor()
 
+def matcher(table,colstring):
+    df = read_sql_query(sql.SQL('SELECT * FROM gisdb.public.{0} LIMIT 1').format(sql.Identifier(table)), db.str)
+    # df = read_sql_query('SELECT * FROM gisdb.public."geospe" LIMIT 1', db.str)
+    for item in df.columns:
+        if item.lower()== f'{colstring}'.lower():
+            return item
 
 def column_name_changer(table_name,which_column,newname):
     """
     Takes table name, column name and new column name to change a column's
     name.
     """
-    from psycopg2 import sql
-    from tools import config
-    import psycopg2
-    params = config()
-    con = psycopg2.connect(**params)
-    cur = con.cursor()
+
+    cur = db.str.cursor()
 
     cur.execute(
         sql.SQL("""
@@ -555,7 +571,6 @@ def column_name_changer(table_name,which_column,newname):
         sql.Identifier(table_name),
         sql.Identifier(which_column),
         sql.Identifier(newname)))
-    con.commit()
 
 
 def indicator_tables(params=None):
@@ -565,7 +580,7 @@ def indicator_tables(params=None):
     """
     import psycopg2, gdaltools,os, geopandas as gpd
     from tools import geoconfig, column_name_changer
-    path = "C:\\Users\\kbonefont.JER-PC-CLIMATE4\\Downloads\\AIM_data\\"
+    path = "C:\\Users\\kbonefont\\Desktop\\data"
     ogr = gdaltools.ogr2ogr()
     gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
 
@@ -594,14 +609,26 @@ def indicator_tables(params=None):
             # specifying exceptions (complex cases/camelcase)
             fname=os.path.join(path,which)
             df = gpd.read_file(fname)
-            for col in df.columns:
-                if col.lower() == 'source':
-                    pass
-                elif col.lower() == 'geometry':
-                    pass
-                else:
-                    column_name_changer("geospe", col.lower(), col)
-            print('Column names fixed.')
+            tbl='geospe'
+            try:
+                for col in df.columns:
+                    if col.lower()=='geometry':
+                        pass
+                    elif matcher(tbl,f'{col}') == col:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
+                        db.str.commit()
+                        column_name_changer(tbl,col.upper(), col)
+                        db.str.commit()
+                    else:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col)
+                    # column_name_changer("geoind", col.capitalize(), col.lower())
+                    # column_name_changer("geoind", col.upper(), col)
+                        print('Column names fixed.')
+
+            except Exception as e:
+                db.str.rollback()
+                print(e)
+            db.str.commit()
 
             # changing name
             cur.execute("""
@@ -614,12 +641,15 @@ def indicator_tables(params=None):
             ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
             FOREIGN KEY ("PrimaryKey")
             REFERENCES "dataHeader" ("PrimaryKey");""")
-            cur.execute("""
-            ALTER TABLE gisdb.public."geoSpeciesInventory"
-            ADD COLUMN "DateLoadedInDb" DATE""")
+            # cur.execute("""
+            # ALTER TABLE gisdb.public."geoSpeciesInventory"
+            # ADD COLUMN "DateLoadedInDb" DATE""")
             cur.execute("""
             UPDATE gisdb.public."geoSpeciesInventory"
             SET "DateLoadedInDb"=now()""")
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoSpeciesInventory"
+            DROP COLUMN IF EXISTS "id" """)
             conn.commit()
             print('geoSpeciesInventory table references header')
 
@@ -644,14 +674,26 @@ def indicator_tables(params=None):
             # specifying exceptions (complex cases/camelcase)
             fname=os.path.join(path,which)
             df = gpd.read_file(fname)
-            for col in df.columns:
-                if col.lower() == 'source':
-                    pass
-                elif col.lower() == 'geometry':
-                    pass
-                else:
-                    column_name_changer("geoind", col.lower(), col)
-            print('Column names fixed.')
+            tbl = 'geoind'
+            try:
+                for col in df.columns:
+                    if col.lower()=='geometry':
+                        pass
+                    elif matcher(tbl,f'{col}') == col:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
+                        db.str.commit()
+                        column_name_changer(tbl,col.upper(), col)
+                        db.str.commit()
+                    else:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col)
+                    # column_name_changer("geoind", col.capitalize(), col.lower())
+                    # column_name_changer("geoind", col.upper(), col)
+                        print('Column names fixed.')
+
+            except Exception as e:
+                db.str.rollback()
+                print(e)
+            db.str.commit()
 
 
             # changing name
