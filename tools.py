@@ -541,7 +541,7 @@ def drop_indicator(prefix,string_position):
 class db:
     params = config()
     # str = connect(**params)
-    str_1 = SimpleConnectionPool(minconn=1,maxconn=5,**params)
+    str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**params)
     str = str_1.getconn()
 
     def __init__(self):
@@ -561,8 +561,8 @@ def column_name_changer(table_name,which_column,newname):
     Takes table name, column name and new column name to change a column's
     name.
     """
-
-    cur = db.str.cursor()
+    con = db.str
+    cur = con.cursor()
 
     cur.execute(
         sql.SQL("""
@@ -572,6 +572,37 @@ def column_name_changer(table_name,which_column,newname):
         sql.Identifier(which_column),
         sql.Identifier(newname)))
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+#
+#
+# import os
+# import os.path
+# import geopandas as gpd
+# path = "C:\\Users\\kbonefont\\Desktop\\data"
+# which = "geospehead.geojson"
+# fname=os.path.join(path,which)
+#
+# df = gpd.read_file(fname)
+# # #
+indicator_tables('spe')
 
 def indicator_tables(params=None):
     """
@@ -585,7 +616,7 @@ def indicator_tables(params=None):
     gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
 
     which = None
-    choice = {'spe':'species_geojson.geojson',
+    choice = {'spe':"species_geojson.geojson",
     'ind':'indicators_geojson.geojson'}
     if params is not None:
         if params == 'spe':
@@ -599,59 +630,61 @@ def indicator_tables(params=None):
             ogr.geom_type = 'POINT'
             con = gdaltools.PgConnectionString(**conf)
             ogr.set_output(con, table_name="geospe")
-            print(which+' table with geometry created. \n')
             ogr.execute()
+            print(which+' table with geometry created. \n')
 
-            param = config()
-            conn = psycopg2.connect(**param)
-            cur = conn.cursor()
 
-            # specifying exceptions (complex cases/camelcase)
-            fname=os.path.join(path,which)
-            df = gpd.read_file(fname)
-            tbl='geospe'
-            try:
-                for col in df.columns:
-                    if col.lower()=='geometry':
-                        pass
-                    elif matcher(tbl,f'{col}') == col:
-                        column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
-                        db.str.commit()
-                        column_name_changer(tbl,col.upper(), col)
-                        db.str.commit()
-                    else:
-                        column_name_changer(tbl,matcher(tbl,f'{col}'), col)
-                    # column_name_changer("geoind", col.capitalize(), col.lower())
-                    # column_name_changer("geoind", col.upper(), col)
-                        print('Column names fixed.')
 
-            except Exception as e:
-                db.str.rollback()
-                print(e)
-            db.str.commit()
+            # fname= "C:\\Users\\kbonefont\\Desktop\\data\\geospehead.geojson"
+            # df = gpd.read_file(fname)
 
-            # changing name
-            cur.execute("""
-            ALTER TABLE gisdb.public.geospe
-            RENAME TO "geoSpeciesInventory";""")
+            # tbl='geospe'
 
-            # referencing header
-            cur.execute("""
-            ALTER TABLE gisdb.public."geoSpeciesInventory"
-            ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
-            FOREIGN KEY ("PrimaryKey")
-            REFERENCES "dataHeader" ("PrimaryKey");""")
+            # for col in df.columns:
+            #     if col.lower()=='geometry':
+            #         pass
+            #     elif matcher(tbl,f'{col}') == col:
+            #         column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
+            #         db.str.commit()
+            #         column_name_changer(tbl,col.upper(), col)
+            #         db.str.commit()
+            #     else:
+            #         column_name_changer(tbl,matcher(tbl,f'{col}'), col)
+            #
+            #         print('Column names fixed.')
+
+
+                # db.str.rollback()
+
+            # db.str.commit()
+            # cur.execute("""
+            # ALTER TABLE gisdb.public.geospe
+            # RENAME TO "geoSpeciesInventory";""")
+            #
+            # # referencing header
+            # cur.execute("""
+            # ALTER TABLE gisdb.public."geoSpeciesInventory"
+            # ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
+            # FOREIGN KEY ("PrimaryKey")
+            # REFERENCES "dataHeader" ("PrimaryKey");""")
             # cur.execute("""
             # ALTER TABLE gisdb.public."geoSpeciesInventory"
             # ADD COLUMN "DateLoadedInDb" DATE""")
-            cur.execute("""
-            UPDATE gisdb.public."geoSpeciesInventory"
-            SET "DateLoadedInDb"=now()""")
-            cur.execute("""
-            ALTER TABLE gisdb.public."geoSpeciesInventory"
-            DROP COLUMN IF EXISTS "id" """)
-            conn.commit()
-            print('geoSpeciesInventory table references header')
+            # cur.execute("""
+            # UPDATE gisdb.public."geoSpeciesInventory"
+            # SET "DateLoadedInDb"=now()""")
+            # cur.execute("""
+            # ALTER TABLE gisdb.public."geoSpeciesInventory"
+            # DROP COLUMN IF EXISTS "id" """)
+            # cur.execute("""
+            # ALTER TABLE gisdb.public."geoSpeciesInventory"
+            # ADD COLUMN "Public" BOOLEAN""")
+            # db.str.commit()
+            # print('geoSpeciesInventory table references header')
+
+
+
+
 
 
         elif params == 'ind':
@@ -666,51 +699,103 @@ def indicator_tables(params=None):
             print(which + ' table with geometry created. \n')
             ogr.execute()
 
-            # change column names
-            param = config()
-            conn = psycopg2.connect(**param)
-            cur = conn.cursor()
-
-            # specifying exceptions (complex cases/camelcase)
-            fname=os.path.join(path,which)
-            df = gpd.read_file(fname)
-            tbl = 'geoind'
-            try:
-                for col in df.columns:
-                    if col.lower()=='geometry':
-                        pass
-                    elif matcher(tbl,f'{col}') == col:
-                        column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
-                        db.str.commit()
-                        column_name_changer(tbl,col.upper(), col)
-                        db.str.commit()
-                    else:
-                        column_name_changer(tbl,matcher(tbl,f'{col}'), col)
-                    # column_name_changer("geoind", col.capitalize(), col.lower())
-                    # column_name_changer("geoind", col.upper(), col)
-                        print('Column names fixed.')
-
-            except Exception as e:
-                db.str.rollback()
-                print(e)
-            db.str.commit()
 
 
-            # changing name
-            cur.execute("""
-            ALTER TABLE gisdb.public.geoind
-            RENAME TO "geoIndicators";""")
+# name_check1()
+def finishing_queries():
+    cur = db.str.cursor()
+    cur.execute("""
+    ALTER TABLE gisdb.public.geospe
+    RENAME TO "geoSpeciesInventory";""")
+    cur.execute("""
+    ALTER TABLE gisdb.public."geoSpeciesInventory"
+    ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
+    FOREIGN KEY ("PrimaryKey")
+    REFERENCES "dataHeader" ("PrimaryKey");""")
+    cur.execute("""
+    ALTER TABLE gisdb.public."geoSpeciesInventory"
+    ADD COLUMN "DateLoadedInDb" DATE""")
+    cur.execute("""
+    UPDATE gisdb.public."geoSpeciesInventory"
+    SET "DateLoadedInDb"=now()""")
+    cur.execute("""
+    ALTER TABLE gisdb.public."geoSpeciesInventory"
+    DROP COLUMN IF EXISTS "id" """)
+    cur.execute("""
+    ALTER TABLE gisdb.public."geoSpeciesInventory"
+    ADD COLUMN "Public" BOOLEAN""")
+    db.str.commit()
 
-            # referencing header
-            cur.execute("""
-            ALTER TABLE gisdb.public."geoIndicators"
-            ADD CONSTRAINT "geoInd_PrimaryKey_fkey"
-            FOREIGN KEY ("PrimaryKey")
-            REFERENCES "dataHeader" ("PrimaryKey");""")
-            cur.execute("""
-            UPDATE gisdb.public."geoIndicators"
-            SET "DateLoadedInDb"=now()""" )
-            conn.commit()
-            print('geoIndicators table references header')
-        else:
-            print("requires parameters")
+
+def col_fixer_species(tbl):
+    """
+    needs db.str, gpd, column_name_changer, matcher
+    """
+    fname= "C:\\Users\\kbonefont\\Desktop\\data\\geospehead.geojson"
+    df = gpd.read_file(fname)
+    try:
+        for col in df.columns:
+            if col.lower()=='geometry':
+                pass
+            elif matcher(tbl,f'{col}') == col:
+                column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
+                db.str.commit()
+                column_name_changer(tbl,col.upper(), col)
+                db.str.commit()
+            else:
+                column_name_changer(tbl,matcher(tbl,f'{col}'), col)
+                db.str.commit()
+
+                print('Column names fixed.')
+
+    except Exception as e:
+        db.str.rollback()
+        print(e)
+
+def name_check2():
+    # change column names
+    params = config()
+    conn = psycopg2.connect(**params)
+    cur = conn.cursor()
+
+    # specifying exceptions (complex cases/camelcase)
+    fname=os.path.join(path,which)
+    df = gpd.read_file(fname)
+    tbl = 'geoind'
+    try:
+        for col in df.columns:
+            if col.lower()=='geometry':
+                pass
+            elif matcher(tbl,f'{col}') == col:
+                column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
+                conn.commit()
+                column_name_changer(tbl,col.upper(), col)
+                conn.commit()
+            else:
+                column_name_changer(tbl,matcher(tbl,f'{col}'), col)
+            # column_name_changer("geoind", col.capitalize(), col.lower())
+            # column_name_changer("geoind", col.upper(), col)
+                print('Column names fixed.')
+
+    except Exception as e:
+        conn.rollback()
+        print(e)
+    conn.commit()
+
+
+    # changing name
+    cur.execute("""
+    ALTER TABLE gisdb.public.geoind
+    RENAME TO "geoIndicators";""")
+
+    # referencing header
+    cur.execute("""
+    ALTER TABLE gisdb.public."geoIndicators"
+    ADD CONSTRAINT "geoInd_PrimaryKey_fkey"
+    FOREIGN KEY ("PrimaryKey")
+    REFERENCES "dataHeader" ("PrimaryKey");""")
+    cur.execute("""
+    UPDATE gisdb.public."geoIndicators"
+    SET "DateLoadedInDb"=now()""" )
+    conn.commit()
+    print('geoIndicators table references header')
