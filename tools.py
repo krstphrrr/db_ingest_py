@@ -61,6 +61,8 @@ def config(filename='database.ini', section='postgresql'):
 
     return db
 
+
+
 def geoconfig(filename='database.ini', section='geo'):
     """
     Same as config but reads another section.
@@ -78,6 +80,17 @@ def geoconfig(filename='database.ini', section='geo'):
         section, filename))
     return db
 
+class db:
+    params = config()
+    # str = connect(**params)
+    str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**params)
+    str = str_1.getconn()
+
+    def __init__(self):
+
+        self._conn = connect(**params)
+        self._cur= self._conn.cursor()
+
 
 class TableList():
     """
@@ -92,10 +105,9 @@ class TableList():
 
     def pull_names(self):
 
-        import psycopg2, re
-        from tools import config
+        import re
         params = config()
-        con = psycopg2.connect(**params)
+        con = db.str
         cur = con.cursor()
         # looking up all user-defined tables in db
         cur.execute("""
@@ -123,11 +135,8 @@ def drop_foreign_keys(table):
     supplied as a function argument, it creates a foreign key name and it
     populates a query with both the constraint name and table name.
     """
-    import psycopg2, re
-    from psycopg2 import sql
-    from tools import config
-    params = config()
-    con = psycopg2.connect(**params)
+    import re
+    con = db.str
     cur = con.cursor()
 
     key_str = "{}_PrimaryKey_fkey".format(str(table))
@@ -150,12 +159,8 @@ def drop_table(table):
     Drops the table used as an argument executing a
     "DROP TABLE IF EXISTS.." query.
     """
-    import psycopg2, re
-    from psycopg2 import sql
-    from tools import config
-
-    params = config()
-    con = psycopg2.connect(**params)
+    import re
+    con = db.str
     cur = con.cursor()
     cur.execute(
         sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(
@@ -169,7 +174,6 @@ def create_tbls():
     Opens a connection, loops through a tuple of "CREATE TABLE.." commands
     and closes the connection.
     """
-    import psycopg2
     commands = (
     """ CREATE TABLE "dataHeader"(
     "PrimaryKey" VARCHAR(100) PRIMARY KEY,
@@ -352,9 +356,8 @@ def create_tbls():
     )
     conn = None
     try:
-        params = config()
         print('Connecting...')
-        conn = psycopg2.connect(**params)
+        conn = db.str
         cur = conn.cursor()
         for command in commands:
             cur.execute(command)
@@ -373,7 +376,6 @@ def table_ingest():
     """
     Reads csv data and uploads it into appropriate pg table.
     """
-
     subdir = 'm_subset/'
     path = 'C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/'
     suffix = '.csv'
@@ -381,10 +383,9 @@ def table_ingest():
     prefix='data'
     files = ['header', 'height','gap','spp','soil','LPI']
     for file in files:
-        import os, psycopg2
+        import os
         from psycopg2 import sql
-        params = config()
-        conn = psycopg2.connect(**params)
+        conn = db.str
         cur = conn.cursor()
 
         if file == 'header':
@@ -602,7 +603,7 @@ def column_name_changer(table_name,which_column,newname):
 #
 # df = gpd.read_file(fname)
 # # #
-indicator_tables('spe')
+# indicator_tables('spe')
 
 def indicator_tables(params=None):
     """
@@ -781,21 +782,21 @@ def name_check2():
         conn.rollback()
         print(e)
     conn.commit()
-
-
-    # changing name
-    cur.execute("""
-    ALTER TABLE gisdb.public.geoind
-    RENAME TO "geoIndicators";""")
-
-    # referencing header
-    cur.execute("""
-    ALTER TABLE gisdb.public."geoIndicators"
-    ADD CONSTRAINT "geoInd_PrimaryKey_fkey"
-    FOREIGN KEY ("PrimaryKey")
-    REFERENCES "dataHeader" ("PrimaryKey");""")
-    cur.execute("""
-    UPDATE gisdb.public."geoIndicators"
-    SET "DateLoadedInDb"=now()""" )
-    conn.commit()
-    print('geoIndicators table references header')
+    #
+    #
+    # # changing name
+    # cur.execute("""
+    # ALTER TABLE gisdb.public.geoind
+    # RENAME TO "geoIndicators";""")
+    #
+    # # referencing header
+    # cur.execute("""
+    # ALTER TABLE gisdb.public."geoIndicators"
+    # ADD CONSTRAINT "geoInd_PrimaryKey_fkey"
+    # FOREIGN KEY ("PrimaryKey")
+    # REFERENCES "dataHeader" ("PrimaryKey");""")
+    # cur.execute("""
+    # UPDATE gisdb.public."geoIndicators"
+    # SET "DateLoadedInDb"=now()""" )
+    # conn.commit()
+    # print('geoIndicators table references header')

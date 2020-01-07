@@ -1,6 +1,9 @@
 """
 Use this script to setup db.
 """
+import os
+os.environ
+
 import pandas as pd
 import psycopg2
 from tools import config
@@ -33,8 +36,6 @@ change into csv.
 schema in the script. if not, add the new fields
 and their field type.
 - check if new fields are true
-
-DateLoadedInDb is 2016 in header
 
 """
 
