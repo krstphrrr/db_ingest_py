@@ -10,19 +10,38 @@ from tools import config
 
 from tools import TableList
 
+
+"""
+check tables up in postgres
+"""
 table_list = TableList()
 table_list.pull_names()
 table_list._TableList__names # <= list that holds current postgres db tables
 
-# drops all foreign keys so tables can be dropped
+
+"""
+1 . drop all foreign keys; FK constraints prevent dropping tables
+    avoids dropping FK for: groups, users, pages
+"""
 from tools import drop_foreign_keys
 for table in table_list._TableList__names:
-    drop_foreign_keys(str(table))
+    if table.find('user')!=-1 or table.find('groups')!=-1 or table.find('pages')!=-1:
+        pass
+    else:
+        drop_foreign_keys(str(table))
 
-# drops all public tables found
+"""
+2. drop all tables
+    avoids dropping the groups, users and pages tables
+"""
 from tools import drop_table
 for table in table_list._TableList__names:
-    drop_table(table)
+    if table.find('user')!=-1 or table.find('groups')!=-1 or table.find('pages')!=-1:
+        pass
+    else:
+        drop_foreign_keys(str(table))
+
+    # drop_table(table)
 
 # all table schemas created simultaneously except those w geometry
 from tools import create_tbls

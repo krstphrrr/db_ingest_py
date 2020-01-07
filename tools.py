@@ -372,137 +372,85 @@ def create_tbls():
 
 #####
 
+
+def queryfun(tablename, file):
+    cur.execute(
+     sql.SQL("""
+     COPY gisdb.public.{0}
+     FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
+     sql.Identifier(tablename)), file)
+
+    cur.execute(
+     sql.SQL("""
+     ALTER TABLE gisdb.public.{0}
+     DROP COLUMN IF EXISTS "DateLoadedInDb"
+     """).format(
+     sql.Identifier(tablename)))
+
+    cur.execute(
+     sql.SQL("""
+     ALTER TABLE gisdb.public.{0}
+     ADD COLUMN "DateLoadedInDb" DATE""").format(
+     sql.Identifier(tablename)))
+
+    cur.execute(
+     sql.SQL("""
+     UPDATE gisdb.public.{0}
+     SET "DateLoadedInDb"=now()""").format(
+     sql.Identifier(tablename)) )
+
+
 def table_ingest():
     """
     Reads csv data and uploads it into appropriate pg table.
     """
-    subdir = 'm_subset/'
-    path = 'C:/Users/kbonefont.JER-PC-CLIMATE4/Downloads/AIM_data/'
+    # subdir = 'm_subset/'
+    path = os.environ['DC_DATA']
     suffix = '.csv'
-    subfiles = '_subs'
-    prefix='data'
-    files = ['header', 'height','gap','spp','soil','LPI']
-    for file in files:
-        import os
-        from psycopg2 import sql
-        conn = db.str
-        cur = conn.cursor()
+    prefix = 'data'
 
-        if file == 'header':
-            with open(os.path.join(path,file+suffix),'r') as f:
-                camelcase = os.path.join(prefix+file.capitalize())
+    for file in os.listdir(path):
+        if os.path.splitext(file)[1]=='.csv' and file.find('header')!=-1:
+            with open(os.path.join(path,file),'r') as f:
+                camelcase = os.path.join(prefix+'header'.capitalize())
                 print("Ingesting header..")
-                cur.copy_expert(
-                sql.SQL("""
-                COPY gisdb.public.{0}
-                FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
-                sql.Identifier(camelcase)), f)
-                cur.execute(
-                sql.SQL("""
-                UPDATE gisdb.public.{0}
-                SET "DateLoadedInDb"=now()""").format(
-                sql.Identifier(camelcase)) )
-                conn.commit()
+                queryfun(camelcase, f)
                 print("Header up.")
 
-        elif file == 'spp':
-            a = 'species'
-            b = 'inventory'
-            with open(os.path.join(path,subdir+file+subfiles+suffix),'r') as f:
-                file = os.path.join(a.capitalize()+b.capitalize())
-                camelcase = os.path.join(prefix+file)
-                print("Ingesting species inventory data..")
-                cur.copy_expert(
-                sql.SQL("""
-                COPY gisdb.public.{0}
-                FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
-                sql.Identifier(camelcase)), f)
-                cur.execute(
-                sql.SQL("""
-                UPDATE gisdb.public.{0}
-                SET "DateLoadedInDb"=now()""").format(
-                sql.Identifier(camelcase)) )
-                conn.commit()
-                print("Species inventory table up.")
+        elif os.path.splitext(file)[1]=='.csv' and file.find('spp')!=-1:
+            with open(os.path.join(path,file),'r') as f:
+                camelcase = os.path.join(prefix+'SpeciesInventory')
+                print("Ingesting species inventory..")
+                queryfun(camelcase, f)
+                print("Species inventory up.")
 
-        elif file == 'soil':
-            a = 'soil'
-            b = 'stability'
-            with open(os.path.join(path,
-            subdir+file+subfiles+suffix),'r') as f:
-                file = os.path.join(a.capitalize()+b.capitalize())
-                camelcase = os.path.join(prefix+file)
-                print("Ingesting soil stability data..")
-                cur.copy_expert(
-                sql.SQL("""
-                COPY gisdb.public.{0}
-                FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
-                sql.Identifier(camelcase)), f)
-                cur.execute(
-                sql.SQL("""
-                UPDATE gisdb.public.{0}
-                SET "DateLoadedInDb"=now()""").format(
-                sql.Identifier(camelcase)) )
-                conn.commit()
-                print("Soil stability table up.")
+        elif os.path.splitext(file)[1]=='.csv' and file.find('soil')!=-1:
+            with open(os.path.join(path,file),'r') as f:
+                camelcase = os.path.join(prefix+'SoilStability')
+                print("Ingesting soilstability..")
+                queryfun(camelcase, f)
+                print("soilstability up.")
 
-        elif file == 'LPI':
-            with open(os.path.join(path,
-            subdir+file+subfiles+suffix)) as f:
-                camelcase = os.path.join(prefix+file.upper())
-                print("Ingesting LPI data..")
-                cur.copy_expert(
-                 sql.SQL("""
-                 COPY gisdb.public.{0}
-                 FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
-                 sql.Identifier(camelcase)), f)
-                cur.execute(
-                 sql.SQL("""
-                 ALTER TABLE gisdb.public.{0}
-                 DROP COLUMN IF EXISTS "DateLoadedInDb"
-                 """).format(
-                 sql.Identifier(camelcase)))
-                cur.execute(
-                 sql.SQL("""
-                 ALTER TABLE gisdb.public.{0}
-                 ADD COLUMN "DateLoadedInDb" DATE""").format(
-                 sql.Identifier(camelcase)))
-                cur.execute(
-                 sql.SQL("""
-                 UPDATE gisdb.public.{0}
-                 SET "DateLoadedInDb"=now()""").format(
-                 sql.Identifier(camelcase)) )
-                conn.commit()
-                print("LPI table up.")
+        elif os.path.splitext(file)[1]=='.csv' and file.find('LPI')!=-1:
+            with open(os.path.join(path,file),'r') as f:
+                camelcase = os.path.join(prefix+'LPI')
+                print("Ingesting LPI..")
+                queryfun(camelcase, f)
+                print("LPI up.")
 
-        else:
-            with open(os.path.join(path,
-            subdir+file+subfiles+suffix)) as f:
-                camelcase = os.path.join(prefix+file.capitalize())
-                print("Ingesting height and gap data..")
-                cur.copy_expert(
-                 sql.SQL("""
-                 COPY gisdb.public.{0}
-                 FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
-                 sql.Identifier(camelcase)), f)
-                cur.execute(
-                 sql.SQL("""
-                 ALTER TABLE gisdb.public.{0}
-                 DROP COLUMN IF EXISTS "DateLoadedInDb"
-                 """).format(
-                 sql.Identifier(camelcase)))
-                cur.execute(
-                 sql.SQL("""
-                 ALTER TABLE gisdb.public.{0}
-                 ADD COLUMN "DateLoadedInDb" DATE""").format(
-                 sql.Identifier(camelcase)))
-                cur.execute(
-                 sql.SQL("""
-                 UPDATE gisdb.public.{0}
-                 SET "DateLoadedInDb"=now()""").format(
-                 sql.Identifier(camelcase)) )
-                conn.commit()
-                print("Height and Gap tables up.")
+        elif os.path.splitext(file)[1]=='.csv' and file.find('height')!=-1:
+            with open(os.path.join(path,file),'r') as f:
+                camelcase = os.path.join(prefix+'Height')
+                print("Ingesting height..")
+                queryfun(camelcase, f)
+                print("height up.")
+
+        elif os.path.splitext(file)[1]=='.csv' and file.find('gap')!=-1:
+            with open(os.path.join(path,file),'r') as f:
+                camelcase = os.path.join(prefix+'Gap')
+                print("Ingesting gap..")
+                queryfun(camelcase, f)
+                print("gap up.")
 
 
 
@@ -512,15 +460,14 @@ def drop_indicator(prefix,string_position):
     and position in the camelcase names. It uses a "DROP TABLE IF EXISTS.."
     query to drop the table filtered through the user-defined string and
     position. Useful for dropping tables with a specific prefix in their
-    name. ex..
+    name. ex.. data or geo
     """
-    import psycopg2, re
+    import re
     from psycopg2 import sql
     from tools import config
     from tools import TableList
     tlist = TableList()
     tlist.pull_names()
-    params = config()
 
     string = "{}".format(str(prefix))
 
@@ -529,8 +476,9 @@ def drop_indicator(prefix,string_position):
         if list(filter(None, re.split('([a-z]+)(?=[A-Z])|([A-Z][a-z]+)', item)))[string_position] == string:
             try:
                 print(item +' dropped')
-                con = psycopg2.connect(**params)
+                con = db.str
                 cur = con.cursor()
+
                 cur.execute(
                 sql.SQL("DROP TABLE IF EXISTS gisdb.public.{};").format(
                 sql.Identifier(item))
@@ -572,23 +520,6 @@ def column_name_changer(table_name,which_column,newname):
         sql.Identifier(table_name),
         sql.Identifier(which_column),
         sql.Identifier(newname)))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #
