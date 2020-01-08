@@ -102,28 +102,32 @@ class TableList():
     __names = []
     __seen = None
 
-
     def pull_names(self):
 
         import re
-        params = config()
+
         con = db.str
         cur = con.cursor()
         # looking up all user-defined tables in db
-        cur.execute("""
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
-        ORDER BY table_name;""")
-        query_results = cur.fetchall()
+        try:
+            cur.execute("""
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+            ORDER BY table_name;""")
+            query_results = cur.fetchall()
 
-        for table in query_results:
-            self.__seen = set(self.__names)
-            if table not in self.__seen:
-                self.__seen.add(re.search(r"\(\'(.*?)\'\,\)",
-                str(table)).group(1))
-                self.__names.append(re.search(r"\(\'(.*?)\'\,\)",
-                str(table)).group(1))
+            for table in query_results:
+                self.__seen = set(self.__names)
+                if table not in self.__seen:
+                    self.__seen.add(re.search(r"\(\'(.*?)\'\,\)",
+                    str(table)).group(1))
+                    self.__names.append(re.search(r"\(\'(.*?)\'\,\)",
+                    str(table)).group(1))
+        except Exception as e:
+            print(e)
+            con = db.str
+            cursor=con.cursor()
 
 
 
@@ -150,7 +154,9 @@ def drop_foreign_keys(table):
         )
     except Exception as e:
         print(e)
-    print('Foreign keys dropped')
+        con = db.str
+        cur = con.cursor()
+    print(f"Foreign keys on {table} dropped")
     con.commit()
 
 
@@ -162,11 +168,17 @@ def drop_table(table):
     import re
     con = db.str
     cur = con.cursor()
-    cur.execute(
-        sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(
-                 sql.Identifier(table))
-    )
-    con.commit()
+    try:
+        cur.execute(
+            sql.SQL('DROP TABLE IF EXISTS gisdb.public.{0}').format(
+                     sql.Identifier(table))
+        )
+        con.commit()
+    except exception as e:
+        print(e)
+        con = db.str
+        cur = con.cursor()
+    print(f"table {table} has been dropped")
 
 
 def create_tbls():
@@ -189,7 +201,7 @@ def create_tbls():
     "DateEstablished" DATE,
     "DateLoadedInDb" DATE,
     "ProjectName" TEXT,
-    "Source" TEXT,
+    "source" TEXT,
     "LocationType" VARCHAR(20),
     "DateVisited" DATE,
     "Elevation" NUMERIC,
@@ -205,7 +217,7 @@ def create_tbls():
     "Recorder" TEXT,
     "DataEntry" TEXT,
     "DataErrorChecking" TEXT,
-    "Direction"NUMERIC,
+    "Direction" NUMERIC,
     "Measure" INT,
     "LineLengthAmount" NUMERIC,
     "GapMin" NUMERIC,
@@ -229,11 +241,9 @@ def create_tbls():
     "GapStart" NUMERIC,
     "GapEnd" NUMERIC,
     "Gap" NUMERIC,
+    "source" TEXT,
     "State" TEXT,
-    "PlotKey" TEXT,
-    "Source" TEXT,
-    "STATE" TEXT,
-    "PLOTKEY" TEXT);""",
+    "PlotKey" TEXT);""",
 
     """ CREATE TABLE "dataLPI"(
     "LineKey" VARCHAR(100),
@@ -262,7 +272,7 @@ def create_tbls():
     "layer" TEXT,
     "code" TEXT,
     "chckbox" INT,
-    "Source" TEXT);""",
+    "source" TEXT);""",
 
     """ CREATE TABLE "dataHeight"(
     "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
@@ -292,7 +302,7 @@ def create_tbls():
     "HeightUOM" TEXT,
     "ShowCheckbox" INT,
     "CheckboxLabel" TEXT,
-    "Source" TEXT,
+    "source" TEXT,
     "UOM" TEXT);""",
 
     """ CREATE TABLE "dataSoilStability"(
@@ -317,7 +327,7 @@ def create_tbls():
     "Veg" TEXT,
     "Rating" INT,
     "Hydro" INT,
-    "Source" TEXT);""",
+    "source" TEXT);""",
 
     """ CREATE TABLE "dataSpeciesInventory"(
     "LineKey" VARCHAR(100),
@@ -343,15 +353,9 @@ def create_tbls():
     "DBKey" TEXT,
     "Species" TEXT,
     "source" TEXT,
+    "SpeciesCount" VARCHAR(100),
     "Density" INT,
-    "Plotkey" TEXT,
-    "Position" TEXT,
-    "Veg" TEXT,
-    "Line" TEXT,
-    "Hydro" TEXT,
-    "SoilStabSubSurface" TEXT,
-    "Pos" TEXT,
-    "Rating" TEXT);
+    "Plotkey" TEXT);
     """
     )
     conn = None
@@ -374,30 +378,49 @@ def create_tbls():
 
 
 def queryfun(tablename, file):
-    cur.execute(
-     sql.SQL("""
-     COPY gisdb.public.{0}
-     FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
-     sql.Identifier(tablename)), file)
+    from psycopg2 import sql
+    con = db.str
+    cur = con.cursor()
+    # cur.execute(
+    #  sql.SQL("""
+    #  COPY gisdb.public.{0}
+    #  FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
+    #  sql.Identifier(tablename)), file)
+    try:
+        # cur.copy_from(file, f'\"{tablename}\"', sep=",",null='\'NA\'')
+        cur.copy_expert(f'COPY gisdb.public."{tablename}" FROM STDIN WITH CSV HEADER NULL \'NA\'', file)
 
-    cur.execute(
-     sql.SQL("""
-     ALTER TABLE gisdb.public.{0}
-     DROP COLUMN IF EXISTS "DateLoadedInDb"
-     """).format(
-     sql.Identifier(tablename)))
+        cur.execute(
+         sql.SQL("""
+         ALTER TABLE gisdb.public.{0}
+         DROP COLUMN IF EXISTS "DateLoadedInDb"
+         """).format(
+         sql.Identifier(tablename)))
 
-    cur.execute(
-     sql.SQL("""
-     ALTER TABLE gisdb.public.{0}
-     ADD COLUMN "DateLoadedInDb" DATE""").format(
-     sql.Identifier(tablename)))
+        cur.execute(
+         sql.SQL("""
+         ALTER TABLE gisdb.public.{0}
+         ADD COLUMN "DateLoadedInDb" DATE""").format(
+         sql.Identifier(tablename)))
 
-    cur.execute(
-     sql.SQL("""
-     UPDATE gisdb.public.{0}
-     SET "DateLoadedInDb"=now()""").format(
-     sql.Identifier(tablename)) )
+        cur.execute(
+         sql.SQL("""
+         UPDATE gisdb.public.{0}
+         SET "DateLoadedInDb"=now()""").format(
+         sql.Identifier(tablename)) )
+    except Exception as e:
+        print(e)
+        con = db.str
+        cur = con.cursor()
+    con.commit()
+
+def colcheck(tablein):
+    """
+    1. read head of csv, fix and replace csv with functioning copy:
+    - read_csv(file, low_memory=false,,header=true, nrows=0)
+    """
+    import pandas as pd
+
 
 
 def table_ingest():
@@ -405,8 +428,9 @@ def table_ingest():
     Reads csv data and uploads it into appropriate pg table.
     """
     # subdir = 'm_subset/'
+    import os
     path = os.environ['DC_DATA']
-    suffix = '.csv'
+
     prefix = 'data'
 
     for file in os.listdir(path):
@@ -487,16 +511,16 @@ def drop_indicator(prefix,string_position):
             except Exception as e:
                 print(e)
 
-class db:
-    params = config()
-    # str = connect(**params)
-    str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**params)
-    str = str_1.getconn()
-
-    def __init__(self):
-
-        self._conn = connect(**params)
-        self._cur= self._conn.cursor()
+# class db:
+#     params = config()
+#     # str = connect(**params)
+#     str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**params)
+#     str = str_1.getconn()
+#
+#     def __init__(self):
+#
+#         self._conn = connect(**params)
+#         self._cur= self._conn.cursor()
 
 def matcher(table,colstring):
     df = read_sql_query(sql.SQL('SELECT * FROM gisdb.public.{0} LIMIT 1').format(sql.Identifier(table)), db.str)
@@ -638,23 +662,23 @@ def finishing_queries():
     cur = db.str.cursor()
     cur.execute("""
     ALTER TABLE gisdb.public.geospe
-    RENAME TO "geoSpeciesInventory";""")
+    RENAME TO "geoSpecies";""")
     cur.execute("""
-    ALTER TABLE gisdb.public."geoSpeciesInventory"
-    ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
+    ALTER TABLE gisdb.public."geoSpecies"
+    ADD CONSTRAINT "geoSpecies_PrimaryKey_fkey"
     FOREIGN KEY ("PrimaryKey")
     REFERENCES "dataHeader" ("PrimaryKey");""")
     cur.execute("""
-    ALTER TABLE gisdb.public."geoSpeciesInventory"
+    ALTER TABLE gisdb.public."geoSpecies"
     ADD COLUMN "DateLoadedInDb" DATE""")
     cur.execute("""
-    UPDATE gisdb.public."geoSpeciesInventory"
+    UPDATE gisdb.public."geoSpecies"
     SET "DateLoadedInDb"=now()""")
     cur.execute("""
-    ALTER TABLE gisdb.public."geoSpeciesInventory"
+    ALTER TABLE gisdb.public."geoSpecies"
     DROP COLUMN IF EXISTS "id" """)
     cur.execute("""
-    ALTER TABLE gisdb.public."geoSpeciesInventory"
+    ALTER TABLE gisdb.public."geoSpecies"
     ADD COLUMN "Public" BOOLEAN""")
     db.str.commit()
 
