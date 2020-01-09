@@ -95,11 +95,7 @@ import pandas as pd
 #             for row in data:
 #                 if ", ".join(row).find("2016")!=-1:
 #                     print(row)
-"""
-almost: needs queryfun to read goodcsvs directly!
 
-
-"""
 from tools import headeringest
 headeringest()
 
