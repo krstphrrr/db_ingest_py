@@ -40,8 +40,13 @@ from pandas import read_sql_query
 from psycopg2 import connect, sql
 from os import chdir, getcwd
 from os.path import abspath, join
+import pandas as pd
+from os import getcwd
+from os.path import normpath,join, splitext
+import pandas as pd
+import os
 
-
+path = os.environ['DC_DATA']
 def config(filename='database.ini', section='postgresql'):
     """
     Uses the configpaser module to read .ini and return a dictionary of
@@ -218,22 +223,22 @@ def create_tbls():
     "DataEntry" TEXT,
     "DataErrorChecking" TEXT,
     "Direction" NUMERIC,
-    "Measure" INT,
+    "Measure" NUMERIC,
     "LineLengthAmount" NUMERIC,
     "GapMin" NUMERIC,
-    "GapData" INT,
-    "PerennialsCanopy" INT,
-    "AnnualGrassesCanopy" INT,
-    "AnnualForbsCanopy" INT,
-    "OtherCanopy" INT,
+    "GapData" NUMERIC,
+    "PerennialsCanopy" NUMERIC,
+    "AnnualGrassesCanopy" NUMERIC,
+    "AnnualForbsCanopy" NUMERIC,
+    "OtherCanopy" NUMERIC,
     "Notes" TEXT,
-    "NoCanopyGaps" INT,
-    "NoBasalGaps" INT,
+    "NoCanopyGaps" NUMERIC,
+    "NoBasalGaps" NUMERIC,
     "DateLoadedInDb" DATE,
-    "PerennialsBasal" INT,
-    "AnnualGrassesBasal" INT,
-    "AnnualForbsBasal" INT,
-    "OtherBasal" INT,
+    "PerennialsBasal" NUMERIC,
+    "AnnualGrassesBasal" NUMERIC,
+    "AnnualForbsBasal" NUMERIC,
+    "OtherBasal" NUMERIC,
     "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
     "DBKey" TEXT,
     "SeqNo" TEXT,
@@ -256,18 +261,18 @@ def create_tbls():
     "DataEntry" TEXT,
     "DataErrorChecking" TEXT,
     "Direction" VARCHAR(50),
-    "Measure" INT,
+    "Measure" NUMERIC,
     "LineLengthAmount" NUMERIC,
     "SpacingIntervalAmount" NUMERIC,
     "SpacingType" TEXT,
     "HeightOption" TEXT,
     "HeightUOM" TEXT,
-    "ShowCheckbox" INT,
+    "ShowCheckbox" NUMERIC,
     "CheckboxLabel" TEXT,
     "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
     "DBKey" TEXT,
     "PointLoc" NUMERIC,
-    "PointNbr" INT,
+    "PointNbr" NUMERIC,
     "ShrubShape" TEXT,
     "layer" TEXT,
     "code" TEXT,
@@ -278,11 +283,11 @@ def create_tbls():
     "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
     "DBKey" TEXT,
     "PointLoc" NUMERIC,
-    "PointNbr" INT,
+    "PointNbr" NUMERIC,
     "RecKey" VARCHAR(100),
     "Height" NUMERIC,
     "Species" TEXT,
-    "Chkbox" INT,
+    "Chkbox" NUMERIC,
     "type" TEXT,
     "GrowthHabit_measured" TEXT,
     "LineKey" VARCHAR(100),
@@ -294,13 +299,13 @@ def create_tbls():
     "DataEntry" TEXT,
     "DataErrorChecking" TEXT,
     "Direction" VARCHAR(100),
-    "Measure" INT,
+    "Measure" NUMERIC,
     "LineLengthAmount" NUMERIC,
     "SpacingIntervalAmount" NUMERIC,
     "SpacingType" TEXT,
     "HeightOption" TEXT,
     "HeightUOM" TEXT,
-    "ShowCheckbox" INT,
+    "ShowCheckbox" NUMERIC,
     "CheckboxLabel" TEXT,
     "source" TEXT,
     "UOM" TEXT);""",
@@ -316,17 +321,17 @@ def create_tbls():
     "Recorder" TEXT,
     "DataEntry" TEXT,
     "DataErrorChecking" TEXT,
-    "SoilStabSubSurface" INT,
+    "SoilStabSubSurface" NUMERIC,
     "Notes" TEXT,
     "DateLoadedInDb" DATE,
     "PrimaryKey" TEXT REFERENCES gisdb.public."dataHeader"("PrimaryKey"),
     "DBKey" TEXT,
-    "Position" INT,
+    "Position" NUMERIC,
     "Line" VARCHAR(50),
     "Pos" VARCHAR(50),
     "Veg" TEXT,
-    "Rating" INT,
-    "Hydro" INT,
+    "Rating" NUMERIC,
+    "Hydro" NUMERIC,
     "source" TEXT);""",
 
     """ CREATE TABLE "dataSpeciesInventory"(
@@ -339,11 +344,11 @@ def create_tbls():
     "Recorder" TEXT,
     "DataEntry" TEXT,
     "DataErrorChecking" TEXT,
-    "SpecRichMethod" INT,
-    "SpecRichMeasure" INT,
-    "SpecRichNbrSubPlots" INT,
-    "SpecRich1Container" INT,
-    "SpecRich1Shape" INT,
+    "SpecRichMethod" NUMERIC,
+    "SpecRichMeasure" NUMERIC,
+    "SpecRichNbrSubPlots" NUMERIC,
+    "SpecRich1Container" NUMERIC,
+    "SpecRich1Shape" NUMERIC,
     "SpecRich1Dim1" NUMERIC,
     "SpecRich1Dim2" NUMERIC,
     "SpecRich1Area" NUMERIC,
@@ -354,7 +359,7 @@ def create_tbls():
     "Species" TEXT,
     "source" TEXT,
     "SpeciesCount" VARCHAR(100),
-    "Density" INT,
+    "Density" NUMERIC,
     "Plotkey" TEXT);
     """
     )
@@ -381,13 +386,8 @@ def queryfun(tablename, file):
     from psycopg2 import sql
     con = db.str
     cur = con.cursor()
-    # cur.execute(
-    #  sql.SQL("""
-    #  COPY gisdb.public.{0}
-    #  FROM STDIN WITH CSV HEADER NULL \'NA\'""").format(
-    #  sql.Identifier(tablename)), file)
+
     try:
-        # cur.copy_from(file, f'\"{tablename}\"', sep=",",null='\'NA\'')
         cur.copy_expert(f'COPY gisdb.public."{tablename}" FROM STDIN WITH CSV HEADER NULL \'NA\'', file)
 
         cur.execute(
@@ -414,63 +414,154 @@ def queryfun(tablename, file):
         cur = con.cursor()
     con.commit()
 
-def colcheck(tablein):
-    """
-    1. read head of csv, fix and replace csv with functioning copy:
-    - read_csv(file, low_memory=false,,header=true, nrows=0)
-    """
-    import pandas as pd
 
-
-
-def table_ingest():
+def prequery(tablename):
     """
-    Reads csv data and uploads it into appropriate pg table.
+    1.
     """
-    # subdir = 'm_subset/'
-    import os
+    pkmiss = dict()
     path = os.environ['DC_DATA']
 
-    prefix = 'data'
+    # print("reading data..")
+    chosenvsdf = pd.read_csv(normpath(join(f'{path}',tablename)), encoding='utf-8', low_memory=False)
+    header = pd.read_sql_query('SELECT * FROM gisdb.public."dataHeader"', db.str)
+    key_diff = set(chosenvsdf.PrimaryKey).difference(header.PrimaryKey)
+    where_diff = chosenvsdf.PrimaryKey.isin(key_diff)
 
+    if len(key_diff)!=0:
+        tablenam = f'{tablename}'.split(".csv")[0]
+        # print([i for i in self.chosenvsdf[where_diff].PrimaryKey.unique()])
+        # saving the badone
+        badones = "missingpks"
+        print(f"checking primary key differences for {tablenam}...")
+
+        # creating string w dictionary
+
+        pkmiss.setdefault(join(f'{tablenam}',"missing"),[])
+
+        if os.path.exists(os.path.join(path,badones)):
+            pass
+        else:
+            os.mkdir(os.path.join(path,badones))
+
+        if not [i for i in chosenvsdf[where_diff].PrimaryKey.unique()]:
+            print("No primary key differences between csv and header")
+        else:
+            for item in [i for i in chosenvsdf[where_diff].PrimaryKey.unique()]:
+
+                if type(item)!=float:
+                    pkmiss[os.path.join(f'{tablenam}',"missing")].append(item)
+
+                else:
+                    print("Float among the primary keys.")
+
+            misspk_str =  os.path.join("missing primary keys :"+", ".join(pkmiss[os.path.join(f'{tablenam}',"missing")]))
+            print(misspk_str)
+
+        # saving  the goodones
+        goodones = "good_csvs"
+
+        if os.path.exists(os.path.join(path,goodones)):
+            pass
+        else:
+            os.mkdir(os.path.join(path,goodones))
+
+        print(f"saving {tablenam} csv with missing primarykeys in 'badones' folder...")
+        chosenvsdf[where_diff].to_csv(os.path.join(os.path.join(path,badones)+"\\"+tablenam+"_pk_missingfromheader.csv"),index=False)
+        good_df = chosenvsdf[~where_diff]
+        good_na = good_df.fillna("NA")
+        good_na = good_na.loc[:, ~good_na.columns.str.contains('^Unnamed')]
+        # in case spp table has a bunch of extra fields
+        for item in good_na.columns:
+            spp_list =["SpecRich2Container", "SpecRich2Shape", "SpecRich2Dim1", "SpecRich2Dim2",
+            "SpecRich2Area", "SpecRich3Container", "SpecRich3Shape", "SpecRich3Dim1", "SpecRich3Dim2",
+            "SpecRich3Area", "SpecRich4Container", "SpecRich4Shape", "SpecRich4Dim1", "SpecRich4Dim2",
+            "SpecRich4Area", "SpecRich5Container", "SpecRich5Shape", "SpecRich5Dim1", "SpecRich5Dim2",
+            "SpecRich5Area", "SpecRich6Container", "SpecRich6Shape", "SpecRich6Dim1", "SpecRich6Dim2",
+            "SpecRich6Area"]
+            if item in spp_list:
+                good_na = good_na.loc[:, ~good_na.columns.str.contains(item)]
+
+        good_na.to_csv(join(join(path,goodones)+"\\"+tablenam+"_subs.csv"),index=False)
+        print(f"good csv's saved for {tablenam} in 'good csvs' folder")
+    else:
+        print("no difference in primary keys")
+
+
+def headeringest():
+    """
+    ingesting header first: in the next function, potential ingests
+    are going to be compared against this header to find extra primary keys.
+    """
+    import os
+    from os import getcwd
+    path = os.environ['DC_DATA']
+    str = "good_csvs"
+
+    prefix = 'data'
+    wd = getcwd()
     for file in os.listdir(path):
         if os.path.splitext(file)[1]=='.csv' and file.find('header')!=-1:
+
             with open(os.path.join(path,file),'r') as f:
                 camelcase = os.path.join(prefix+'header'.capitalize())
                 print("Ingesting header..")
                 queryfun(camelcase, f)
                 print("Header up.")
 
-        elif os.path.splitext(file)[1]=='.csv' and file.find('spp')!=-1:
-            with open(os.path.join(path,file),'r') as f:
+def table_ingest():
+    """
+    Reads csv data and uploads it into appropriate pg table.
+    1. finds appropriate csv.
+    2. does primarykey check
+    3. saves two csvs: missing primary keys, and matching ones
+    4. ingests matching ones
+    """
+
+    import os
+    from os import getcwd
+    path = os.environ['DC_DATA']
+    str = "good_csvs"
+    wd = getcwd()
+
+    prefix = 'data'
+
+    for file in os.listdir(path):
+        if os.path.splitext(file)[1]=='.csv' and file.find('spp')!=-1:
+            prequery(file)
+            with open(os.path.join(path,str,os.path.splitext(file)[0]+'_subs.csv'),'r') as f:
                 camelcase = os.path.join(prefix+'SpeciesInventory')
                 print("Ingesting species inventory..")
                 queryfun(camelcase, f)
                 print("Species inventory up.")
 
         elif os.path.splitext(file)[1]=='.csv' and file.find('soil')!=-1:
-            with open(os.path.join(path,file),'r') as f:
+            prequery(file)
+            with open(os.path.join(path,str,os.path.splitext(file)[0]+'_subs.csv'),'r') as f:
                 camelcase = os.path.join(prefix+'SoilStability')
                 print("Ingesting soilstability..")
                 queryfun(camelcase, f)
                 print("soilstability up.")
 
-        elif os.path.splitext(file)[1]=='.csv' and file.find('LPI')!=-1:
-            with open(os.path.join(path,file),'r') as f:
+        elif os.path.splitext(file)[1]=='.csv' and file.find('lpi')!=-1:
+            prequery(file)
+            with open(os.path.join(path,str,os.path.splitext(file)[0]+'_subs.csv'),'r') as f:
                 camelcase = os.path.join(prefix+'LPI')
                 print("Ingesting LPI..")
                 queryfun(camelcase, f)
                 print("LPI up.")
 
         elif os.path.splitext(file)[1]=='.csv' and file.find('height')!=-1:
-            with open(os.path.join(path,file),'r') as f:
+            prequery(file)
+            with open(os.path.join(path,str,os.path.splitext(file)[0]+'_subs.csv'),'r') as f:
                 camelcase = os.path.join(prefix+'Height')
                 print("Ingesting height..")
                 queryfun(camelcase, f)
                 print("height up.")
 
         elif os.path.splitext(file)[1]=='.csv' and file.find('gap')!=-1:
-            with open(os.path.join(path,file),'r') as f:
+            prequery(file)
+            with open(os.path.join(path,str,os.path.splitext(file)[0]+'_subs.csv'),'r') as f:
                 camelcase = os.path.join(prefix+'Gap')
                 print("Ingesting gap..")
                 queryfun(camelcase, f)
@@ -511,16 +602,6 @@ def drop_indicator(prefix,string_position):
             except Exception as e:
                 print(e)
 
-# class db:
-#     params = config()
-#     # str = connect(**params)
-#     str_1 = SimpleConnectionPool(minconn=1,maxconn=10,**params)
-#     str = str_1.getconn()
-#
-#     def __init__(self):
-#
-#         self._conn = connect(**params)
-#         self._cur= self._conn.cursor()
 
 def matcher(table,colstring):
     df = read_sql_query(sql.SQL('SELECT * FROM gisdb.public.{0} LIMIT 1').format(sql.Identifier(table)), db.str)

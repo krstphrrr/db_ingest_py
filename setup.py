@@ -9,6 +9,10 @@ from tools import config
 from tools import TableList
 from tools import db
 
+import os
+
+
+
 """
 check tables up in postgres
 """
@@ -91,7 +95,13 @@ import pandas as pd
 #             for row in data:
 #                 if ", ".join(row).find("2016")!=-1:
 #                     print(row)
+"""
+almost: needs queryfun to read goodcsvs directly!
 
+
+"""
+from tools import headeringest
+headeringest()
 
 from tools import table_ingest
 table_ingest()
