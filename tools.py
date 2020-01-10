@@ -626,6 +626,19 @@ def column_name_changer(table_name,which_column,newname):
         sql.Identifier(newname)))
 
 
+def df_to_gdf(input_df):
+    df = input_df.copy()
+    geometry = [Point(xy) for xy in zip(df.Longitude_NAD83, df.Latitude_NAD83)]
+    return gpd.GeoDataFrame(df, crs="+init=epsg:4326", geometry=geometry)
+
+def csv_to_geojson(input_fp, output_fp):
+    csv_data = pd.read_csv(input_fp,
+                       sep=',',
+                       encoding='utf-8', low_memory=False)
+    geojson_data = (csv_data.pipe(df_to_gdf).to_json())
+    with open(output_fp, 'w') as geojson_file:
+        geojson_file.write(geojson_data)
+
 #
 #
 #
@@ -639,96 +652,148 @@ def column_name_changer(table_name,which_column,newname):
 # df = gpd.read_file(fname)
 # # #
 # indicator_tables('spe')
-import pandas as pd
-import geopandas as gpd
-from shapely.geometry import Point
-path = os.environ['DC_DATA']
-points = {}
-str = 'Points'
-lst = ['a','b']
-point_const(lst)
-def point_const(*coords):
-    return coords
-
-point_const([43,3])
-import rpy2
-result = pyreadr.read_r(os.path.join(path,'geoInd.Rdata'))
-import rpy2.robjects as robjects
-from rpy2.robjects import pandas2ri
-# os.environ['R_USER'] =
-readRDS = robjects.r['readRDS']
-df = readRDS(os.path.join(path,'geoInd.Rdata'))
-pd_dt = robjects.conversion.ri2py(df)
-df['Shape']
-dir(df)
-pandas2ri.py
-len(df)
-[i for i in df[-1][0]]
-x = df[-1]
-x._get_colnames()
-x._names_get
-x.list_attrs()
-dir(x)
-
-import numpy
-import rpy2.robjects.numpy2ri as rpyn
-vector = rpyn.ri2py(x)
-vector.names
-vector = numpy.asarray(x)
-len(x)
-x[0][0]
-
-len(x[0])
-print(df[-1].r_repr())
-
-t = robjects.r(df[-1])
-v = robjects.r['auto.arima'](t)
-
-for i in range(0,5):
-        for c in [x[i][b] for b in range(len(x[i]))]:
-            print(c)
-
-for i in range(0,5):
-    for b in [c in c for range(len(x[i])) ]:
-        print(x[i])
-        # print(x[i][b])
-        print(point_const(x[i][b]))
-x[1]
-from os import getcwd
-getcwd()
-p =os.path.join(path,'myfile.geojson')
-p
-
-df = pd.read_csv(
-    FILE_NAME, delimiter=";", header=None,
-    names=FILE_HEADER, usecols=USE_COLS)
-gdf = GeoDataFrame(
-    df.drop(['x', 'y'], axis=1),
-    crs={'init': 'epsg:4326'},
-    geometry=[Point(xy) for xy in zip(df.x, df.y)])
-
-
-import geopandas as gpd
-from geoalchemy2 import Geometry
-import sqlalchemy
-
-
-from shapely.geometry import Point
-for f in os.listdir(os.path.join(path,'geos')):
-    if f.find('geo')!=-1 and os.path.splitext(f)[1]=='.csv':
-        print(f)
-        df_1 = pd.read_csv(os.path.join(path,"geos",f), low_memory=False)
-        gdf = gpd.GeoDataFrame(
-            df_1.drop(['long', 'lat'], axis=1),
-            crs={'init': 'epsg:4326'},
-            geometry=[Point(xy) for xy in zip(df_1.long, df_1.lat)])
-        gdf.to_sql()
-
+# import pandas as pd
+# import geopandas as gpd
+# from shapely.geometry import Point
+# path = os.environ['DC_DATA']
+# points = {}
+# str = 'Points'
+# lst = ['a','b']
+# point_const(lst)
+# def point_const(*coords):
+#     return coords
+#
+# point_const([43,3])
+# import rpy2
+# result = pyreadr.read_r(os.path.join(path,'geoInd.Rdata'))
+# import rpy2.robjects as robjects
+# from rpy2.robjects import pandas2ri
+# # os.environ['R_USER'] =
+# readRDS = robjects.r['readRDS']
+# df = readRDS(os.path.join(path,'geoInd.Rdata'))
+# pd_dt = robjects.conversion.ri2py(df)
+# df['Shape']
+# dir(df)
+# pandas2ri.py
+# len(df)
+# [i for i in df[-1][0]]
+# x = df[-1]
+# x._get_colnames()
+# x._names_get
+# x.list_attrs()
+# dir(x)
+#
+# import numpy
+# import rpy2.robjects.numpy2ri as rpyn
+# vector = rpyn.ri2py(x)
+# vector.names
+# vector = numpy.asarray(x)
+# len(x)
+# x[0][0]
+#
+# len(x[0])
+# print(df[-1].r_repr())
+#
+# t = robjects.r(df[-1])
+# v = robjects.r['auto.arima'](t)
+#
+# for i in range(0,5):
+#         for c in [x[i][b] for b in range(len(x[i]))]:
+#             print(c)
+#
+# for i in range(0,5):
+#     for b in [c in c for range(len(x[i])) ]:
+#         print(x[i])
+#         # print(x[i][b])
+#         print(point_const(x[i][b]))
+# x[1]
+# from os import getcwd
+# getcwd()
+# p =os.path.join(path,'myfile.geojson')
+# p
+#
+# df = pd.read_csv(
+#     FILE_NAME, delimiter=";", header=None,
+#     names=FILE_HEADER, usecols=USE_COLS)
+# gdf = GeoDataFrame(
+#     df.drop(['x', 'y'], axis=1),
+#     crs={'init': 'epsg:4326'},
+#     geometry=[Point(xy) for xy in zip(df.x, df.y)])
+#
+#
+# import geopandas as gpd
+# from geoalchemy2 import WKTElement
+# from geoalchemy2 import Geometry
+# from sqlalchemy import create_engine
+# import os
+# dburl = os.environ['DB_STR']
+# engine = create_engine(dburl)
+#
+# str(gdf.geometry[13395])
+# gdf_test = gdf
+# gdf_test.geometry.map({'POINT (nan nan)':None})
+# df_2 = df_1
+#
+# gdf_test = gpd.GeoDataFrame(
+#     df_2.drop(['long', 'lat'], axis=1),
+#     crs={'init': 'epsg:4326'},
+#     geometry=[Point(x, y) for x, y in zip(df_2.long, df_2.lat)])
+# from shapely.geometry import Point
+#
+# geometry = gdf['']
+# dft = df_2
+# import numpy as np
+# gdf.geometry.isna()
+# ranpoint=gdf.geometry.loc[13950]
+#
+# ranpoint.is_empty
+# str(gdf.geometry.loc[13950])
+#
+# np.isnan(dft.lat[13950],dft.long[13950])
+# if np.isnan(dft.lat[13950]):
+#     print('y')
+# else:
+#     print('n')
+# dft2 = dft.replace({'lat':{np.nan:None},'long':{np.nan:None}})
+#
+# geom=[None if np.isnan(x) else Point(x, y) for x, y in zip(dft.long, dft.lat)]
+# for i in geom:
+#     print(str(i))
+# gdf2 = gpd.GeoDataFrame(
+#     dft2.drop(['long', 'lat'], axis=1),
+#     crs={'init': 'epsg:4326'},
+#     geometry=[Point(x, y) if x,y not np.nan else None for x, y in zip(dft2.long, dft2.lat)])
+# type(dft.lat.loc[13950])
+# type(dft.long)
+# [f"Point{x,y}" for x,y in zip(dft.long, dft.lat) if dft.loc[]]
+# Point()
+# from shapely.geometry import Point
+# import geopandas_postgis
+# for f in os.listdir(os.path.join(path,'geos')):
+#     if f.find('geo')!=-1 and os.path.splitext(f)[1]=='.csv':
+#         if f.find('Ind')!=-1:
+#             print(f)
+#             df_1 = pd.read_csv(os.path.join(path,"geos",f), low_memory=False)
+#             gdf = gpd.GeoDataFrame(
+#                 df_1.drop(['long', 'lat'], axis=1),
+#                 crs={'init': 'epsg:4326'},
+#                 geometry=[Point() if np.isnan(x) else Point(x, y) for x, y in zip(df_1.long, df_1.lat)])
+#             # gdf.to_sql('geoIndicators',engine, if_exists='replace', index=False,
+#             # dtype={'geom':Geometry('Point',srid=4326)})
+#             try:
+#                 gdf.postgis.to_postgis(con=engine, table_name='geoIndicators', if_exists='replace',index=False, geometry='Point')
+#             except Exception as e:
+#                 print(e)
+#                 con = db.str
+#                 cur = con.cursor()
+#                 dburl = os.environ['DB_STR']
+#                 engine = create_engine(dburl)
+#
 
 
             # df = pd.read_csv(os.path.join(path,file), low_memory=False)
             # print(df.Shape[0:5])
-
+# os.path.join(path,choice['spe'])
 def indicator_tables(params=None):
     """
     Takes either 'spe' or 'ind' as arguments to create and ingest
@@ -741,37 +806,40 @@ def indicator_tables(params=None):
     import psycopg2, gdaltools,os, geopandas as gpd
     from tools import geoconfig, column_name_changer
     path = os.environ['DC_DATA']
-    # ogr = gdaltools.ogr2ogr()
-    # gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
+    ogr = gdaltools.ogr2ogr()
+    gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
 
     which = None
-    # choice = {'spe':"species_geojson.geojson",
-    # 'ind':'indicators_geojson.geojson'}
+    choice = {'spe':"geoSpe.geojson",
+    'ind':'geoInd.geojson'}
     if params is not None:
         if params == 'spe':
-            for file in os.listdir(os.path.join(path),'geos'):
-                print(file)
-                gdf = gpd.Geo
 
             # create schema + ingest
-            # conf = geoconfig()
-            # ogr = gdaltools.ogr2ogr()
-            # which = choice.get('spe')
-            # ogr.set_encoding("UTF-8")
-            # ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
-            # ogr.geom_type = 'POINT'
-            # con = gdaltools.PgConnectionString(**conf)
-            # ogr.set_output(con, table_name="geospe")
-            # ogr.execute()
+            conf = geoconfig()
+            ogr = gdaltools.ogr2ogr()
+            which = choice.get('spe')
+            ogr.set_encoding("UTF-8")
+            ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
+            ogr.geom_type = 'POINT'
+            con = gdaltools.PgConnectionString(**conf)
+            ogr.set_output(con, table_name="geospe")
+            ogr.execute()
             print(which+' table with geometry created. \n')
 
 
 
-            # fname= "C:\\Users\\kbonefont\\Desktop\\data\\geospehead.geojson"
-            # df = gpd.read_file(fname)
-
+            fname= os.path.join(path,choice[f'{params}'])
+            print('reading gpd for colcheck..')
+            print(fname)
+            df_1 = pd.read_csv(os.path.join(path,'geoSpecies_2.csv'), low_memory=False)
+            df = gpd.GeoDataFrame(
+                df_1.drop(['Longitude_NAD83', 'Latitude_NAD83'], axis=1),
+                crs={'init': 'epsg:4326'},
+                geometry=[Point(xy) for xy in zip(df_1.Longitude_NAD83, df_1.Latitude_NAD83)])
+            return df
             # tbl='geospe'
-
+            #
             # for col in df.columns:
             #     if col.lower()=='geometry':
             #         pass
@@ -784,10 +852,9 @@ def indicator_tables(params=None):
             #         column_name_changer(tbl,matcher(tbl,f'{col}'), col)
             #
             #         print('Column names fixed.')
-
-
-                # db.str.rollback()
-
+            #
+            #     db.str.rollback()
+            #
             # db.str.commit()
             # cur.execute("""
             # ALTER TABLE gisdb.public.geospe
@@ -818,18 +885,18 @@ def indicator_tables(params=None):
 
 
 
-
-        elif params == 'ind':
-            conf = geoconfig()
-            ogr = gdaltools.ogr2ogr()
-            which = choice.get('ind')
-            ogr.set_encoding("UTF-8")
-            ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
-            ogr.geom_type = 'POINT'
-            con = gdaltools.PgConnectionString(**conf)
-            ogr.set_output(con, table_name="geoind")
-            print(which + ' table with geometry created. \n')
-            ogr.execute()
+        #
+        # elif params == 'ind':
+        #     conf = geoconfig()
+        #     ogr = gdaltools.ogr2ogr()
+        #     which = choice.get('ind')
+        #     ogr.set_encoding("UTF-8")
+        #     ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
+        #     ogr.geom_type = 'POINT'
+        #     con = gdaltools.PgConnectionString(**conf)
+        #     ogr.set_output(con, table_name="geoind")
+        #     print(which + ' table with geometry created. \n')
+        #     ogr.execute()
 
 
 

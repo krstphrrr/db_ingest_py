@@ -107,5 +107,7 @@ from tools import drop_indicator
 drop_indicator('geo', 0)
 
 # indicator ingestion
+import geopandas as gpd
+gdf = gpd.read_file(r"C:\Users\kbonefont\Desktop\data\geoInd.geojson")
 from tools import indicator_tables
 indicator_tables('spe')
