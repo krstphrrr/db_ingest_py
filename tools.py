@@ -639,161 +639,7 @@ def csv_to_geojson(input_fp, output_fp):
     with open(output_fp, 'w') as geojson_file:
         geojson_file.write(geojson_data)
 
-#
-#
-#
-# import os
-# import os.path
-# import geopandas as gpd
-# path = "C:\\Users\\kbonefont\\Desktop\\data"
-# which = "geospehead.geojson"
-# fname=os.path.join(path,which)
-#
-# df = gpd.read_file(fname)
-# # #
-# indicator_tables('spe')
-# import pandas as pd
-# import geopandas as gpd
-# from shapely.geometry import Point
-# path = os.environ['DC_DATA']
-# points = {}
-# str = 'Points'
-# lst = ['a','b']
-# point_const(lst)
-# def point_const(*coords):
-#     return coords
-#
-# point_const([43,3])
-# import rpy2
-# result = pyreadr.read_r(os.path.join(path,'geoInd.Rdata'))
-# import rpy2.robjects as robjects
-# from rpy2.robjects import pandas2ri
-# # os.environ['R_USER'] =
-# readRDS = robjects.r['readRDS']
-# df = readRDS(os.path.join(path,'geoInd.Rdata'))
-# pd_dt = robjects.conversion.ri2py(df)
-# df['Shape']
-# dir(df)
-# pandas2ri.py
-# len(df)
-# [i for i in df[-1][0]]
-# x = df[-1]
-# x._get_colnames()
-# x._names_get
-# x.list_attrs()
-# dir(x)
-#
-# import numpy
-# import rpy2.robjects.numpy2ri as rpyn
-# vector = rpyn.ri2py(x)
-# vector.names
-# vector = numpy.asarray(x)
-# len(x)
-# x[0][0]
-#
-# len(x[0])
-# print(df[-1].r_repr())
-#
-# t = robjects.r(df[-1])
-# v = robjects.r['auto.arima'](t)
-#
-# for i in range(0,5):
-#         for c in [x[i][b] for b in range(len(x[i]))]:
-#             print(c)
-#
-# for i in range(0,5):
-#     for b in [c in c for range(len(x[i])) ]:
-#         print(x[i])
-#         # print(x[i][b])
-#         print(point_const(x[i][b]))
-# x[1]
-# from os import getcwd
-# getcwd()
-# p =os.path.join(path,'myfile.geojson')
-# p
-#
-# df = pd.read_csv(
-#     FILE_NAME, delimiter=";", header=None,
-#     names=FILE_HEADER, usecols=USE_COLS)
-# gdf = GeoDataFrame(
-#     df.drop(['x', 'y'], axis=1),
-#     crs={'init': 'epsg:4326'},
-#     geometry=[Point(xy) for xy in zip(df.x, df.y)])
-#
-#
-# import geopandas as gpd
-# from geoalchemy2 import WKTElement
-# from geoalchemy2 import Geometry
-# from sqlalchemy import create_engine
-# import os
-# dburl = os.environ['DB_STR']
-# engine = create_engine(dburl)
-#
-# str(gdf.geometry[13395])
-# gdf_test = gdf
-# gdf_test.geometry.map({'POINT (nan nan)':None})
-# df_2 = df_1
-#
-# gdf_test = gpd.GeoDataFrame(
-#     df_2.drop(['long', 'lat'], axis=1),
-#     crs={'init': 'epsg:4326'},
-#     geometry=[Point(x, y) for x, y in zip(df_2.long, df_2.lat)])
-# from shapely.geometry import Point
-#
-# geometry = gdf['']
-# dft = df_2
-# import numpy as np
-# gdf.geometry.isna()
-# ranpoint=gdf.geometry.loc[13950]
-#
-# ranpoint.is_empty
-# str(gdf.geometry.loc[13950])
-#
-# np.isnan(dft.lat[13950],dft.long[13950])
-# if np.isnan(dft.lat[13950]):
-#     print('y')
-# else:
-#     print('n')
-# dft2 = dft.replace({'lat':{np.nan:None},'long':{np.nan:None}})
-#
-# geom=[None if np.isnan(x) else Point(x, y) for x, y in zip(dft.long, dft.lat)]
-# for i in geom:
-#     print(str(i))
-# gdf2 = gpd.GeoDataFrame(
-#     dft2.drop(['long', 'lat'], axis=1),
-#     crs={'init': 'epsg:4326'},
-#     geometry=[Point(x, y) if x,y not np.nan else None for x, y in zip(dft2.long, dft2.lat)])
-# type(dft.lat.loc[13950])
-# type(dft.long)
-# [f"Point{x,y}" for x,y in zip(dft.long, dft.lat) if dft.loc[]]
-# Point()
-# from shapely.geometry import Point
-# import geopandas_postgis
-# for f in os.listdir(os.path.join(path,'geos')):
-#     if f.find('geo')!=-1 and os.path.splitext(f)[1]=='.csv':
-#         if f.find('Ind')!=-1:
-#             print(f)
-#             df_1 = pd.read_csv(os.path.join(path,"geos",f), low_memory=False)
-#             gdf = gpd.GeoDataFrame(
-#                 df_1.drop(['long', 'lat'], axis=1),
-#                 crs={'init': 'epsg:4326'},
-#                 geometry=[Point() if np.isnan(x) else Point(x, y) for x, y in zip(df_1.long, df_1.lat)])
-#             # gdf.to_sql('geoIndicators',engine, if_exists='replace', index=False,
-#             # dtype={'geom':Geometry('Point',srid=4326)})
-#             try:
-#                 gdf.postgis.to_postgis(con=engine, table_name='geoIndicators', if_exists='replace',index=False, geometry='Point')
-#             except Exception as e:
-#                 print(e)
-#                 con = db.str
-#                 cur = con.cursor()
-#                 dburl = os.environ['DB_STR']
-#                 engine = create_engine(dburl)
-#
 
-
-            # df = pd.read_csv(os.path.join(path,file), low_memory=False)
-            # print(df.Shape[0:5])
-# os.path.join(path,choice['spe'])
 def indicator_tables(params=None):
     """
     Takes either 'spe' or 'ind' as arguments to create and ingest
@@ -803,10 +649,11 @@ def indicator_tables(params=None):
         - could geopandas do this without ogr??
     2.
     """
+    from shapely.geometry import Point
     import psycopg2, gdaltools,os, geopandas as gpd
     from tools import geoconfig, column_name_changer
     path = os.environ['DC_DATA']
-    ogr = gdaltools.ogr2ogr()
+    cur = db.str.cursor()
     gdaltools.Wrapper.BASEPATH = 'C:\\OSGeo4W64\\bin'
 
     which = None
@@ -827,174 +674,123 @@ def indicator_tables(params=None):
             ogr.execute()
             print(which+' table with geometry created. \n')
 
+            fname= os.path.join(path,choice[f'{params}'])
+            print('reading gpd for colcheck..')
+            print(fname)
+            df = pd.read_csv(os.path.join(path,'geoSpecies_2.csv'), low_memory=False, nrows=0)
 
+            tbl='geospe'
+
+            try:
+                for col in df.columns:
+                    if (col.lower()=='longitude_nad84') or (col.lower()=="latitude_nad83"):
+                        pass
+                    elif matcher(tbl,f'{col}') == col:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
+                        db.str.commit()
+                        column_name_changer(tbl,col.upper(), col)
+                        db.str.commit()
+                    else:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col)
+                        db.str.commit()
+
+                        print('Column names fixed.')
+
+            except Exception as e:
+                con = db.str
+                cur = db.str.cursor()
+                con.rollback()
+                print(e)
+
+            # db.str.commit()
+            cur.execute("""
+            ALTER TABLE gisdb.public.geospe
+            RENAME TO "geoSpeciesInventory";""")
+
+            # # referencing header
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoSpeciesInventory"
+            ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
+            FOREIGN KEY ("PrimaryKey")
+            REFERENCES "dataHeader" ("PrimaryKey");""")
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoSpeciesInventory"
+            ADD COLUMN "DateLoadedInDb" DATE""")
+            cur.execute("""
+            UPDATE gisdb.public."geoSpeciesInventory"
+            SET "DateLoadedInDb"=now()""")
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoSpeciesInventory"
+            DROP COLUMN IF EXISTS "id" """)
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoSpeciesInventory"
+            ADD COLUMN "Public" BOOLEAN""")
+            db.str.commit()
+            print('geoSpeciesInventory table references header')
+
+
+        elif params == 'ind':
+            conf = geoconfig()
+            ogr = gdaltools.ogr2ogr()
+            which = choice.get('ind')
+            ogr.set_encoding("UTF-8")
+            ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
+            ogr.geom_type = 'POINT'
+            con = gdaltools.PgConnectionString(**conf)
+            ogr.set_output(con, table_name="geoind")
+            print(which + ' table with geometry created. \n')
+            ogr.execute()
 
             fname= os.path.join(path,choice[f'{params}'])
             print('reading gpd for colcheck..')
             print(fname)
-            df_1 = pd.read_csv(os.path.join(path,'geoSpecies_2.csv'), low_memory=False)
-            df = gpd.GeoDataFrame(
-                df_1.drop(['Longitude_NAD83', 'Latitude_NAD83'], axis=1),
-                crs={'init': 'epsg:4326'},
-                geometry=[Point(xy) for xy in zip(df_1.Longitude_NAD83, df_1.Latitude_NAD83)])
-            return df
-            # tbl='geospe'
-            #
-            # for col in df.columns:
-            #     if col.lower()=='geometry':
-            #         pass
-            #     elif matcher(tbl,f'{col}') == col:
-            #         column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
-            #         db.str.commit()
-            #         column_name_changer(tbl,col.upper(), col)
-            #         db.str.commit()
-            #     else:
-            #         column_name_changer(tbl,matcher(tbl,f'{col}'), col)
-            #
-            #         print('Column names fixed.')
-            #
-            #     db.str.rollback()
-            #
-            # db.str.commit()
+            df = pd.read_csv(os.path.join(path,'geoInd_2.csv'), low_memory=False, nrows=0)
+
+            tbl='geoind'
+
+            try:
+                for col in df.columns:
+                    if (col.lower()=='longitude_nad84') or (col.lower()=="latitude_nad83"):
+                        pass
+                    elif matcher(tbl,f'{col}') == col:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
+                        db.str.commit()
+                        column_name_changer(tbl,col.upper(), col)
+                        db.str.commit()
+                    else:
+                        column_name_changer(tbl,matcher(tbl,f'{col}'), col)
+                        db.str.commit()
+
+                        print('Column names fixed.')
+
+            except Exception as e:
+                con = db.str
+                cur = db.str.cursor()
+                con.rollback()
+                print(e)
+
+            # changing name
+            cur.execute("""
+            ALTER TABLE gisdb.public.geoind
+            RENAME TO "geoIndicators";""")
+
+            # referencing header
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoIndicators"
+            ADD CONSTRAINT "geoInd_PrimaryKey_fkey"
+            FOREIGN KEY ("PrimaryKey")
+            REFERENCES "dataHeader" ("PrimaryKey");""")
             # cur.execute("""
-            # ALTER TABLE gisdb.public.geospe
-            # RENAME TO "geoSpeciesInventory";""")
-            #
-            # # referencing header
-            # cur.execute("""
-            # ALTER TABLE gisdb.public."geoSpeciesInventory"
-            # ADD CONSTRAINT "geoSpe_PrimaryKey_fkey"
-            # FOREIGN KEY ("PrimaryKey")
-            # REFERENCES "dataHeader" ("PrimaryKey");""")
-            # cur.execute("""
-            # ALTER TABLE gisdb.public."geoSpeciesInventory"
+            # ALTER TABLE gisdb.public."geoIndicators"
             # ADD COLUMN "DateLoadedInDb" DATE""")
-            # cur.execute("""
-            # UPDATE gisdb.public."geoSpeciesInventory"
-            # SET "DateLoadedInDb"=now()""")
-            # cur.execute("""
-            # ALTER TABLE gisdb.public."geoSpeciesInventory"
-            # DROP COLUMN IF EXISTS "id" """)
-            # cur.execute("""
-            # ALTER TABLE gisdb.public."geoSpeciesInventory"
-            # ADD COLUMN "Public" BOOLEAN""")
-            # db.str.commit()
-            # print('geoSpeciesInventory table references header')
-
-
-
-
-
-        #
-        # elif params == 'ind':
-        #     conf = geoconfig()
-        #     ogr = gdaltools.ogr2ogr()
-        #     which = choice.get('ind')
-        #     ogr.set_encoding("UTF-8")
-        #     ogr.set_input(os.path.join(path,which),srs="EPSG:4326")
-        #     ogr.geom_type = 'POINT'
-        #     con = gdaltools.PgConnectionString(**conf)
-        #     ogr.set_output(con, table_name="geoind")
-        #     print(which + ' table with geometry created. \n')
-        #     ogr.execute()
-
-
-
-# name_check1()
-def finishing_queries():
-    cur = db.str.cursor()
-    cur.execute("""
-    ALTER TABLE gisdb.public.geospe
-    RENAME TO "geoSpecies";""")
-    cur.execute("""
-    ALTER TABLE gisdb.public."geoSpecies"
-    ADD CONSTRAINT "geoSpecies_PrimaryKey_fkey"
-    FOREIGN KEY ("PrimaryKey")
-    REFERENCES "dataHeader" ("PrimaryKey");""")
-    cur.execute("""
-    ALTER TABLE gisdb.public."geoSpecies"
-    ADD COLUMN "DateLoadedInDb" DATE""")
-    cur.execute("""
-    UPDATE gisdb.public."geoSpecies"
-    SET "DateLoadedInDb"=now()""")
-    cur.execute("""
-    ALTER TABLE gisdb.public."geoSpecies"
-    DROP COLUMN IF EXISTS "id" """)
-    cur.execute("""
-    ALTER TABLE gisdb.public."geoSpecies"
-    ADD COLUMN "Public" BOOLEAN""")
-    db.str.commit()
-
-
-def col_fixer_species(tbl):
-    """
-    needs db.str, gpd, column_name_changer, matcher
-    """
-    fname= "C:\\Users\\kbonefont\\Desktop\\data\\geospehead.geojson"
-    df = gpd.read_file(fname)
-    try:
-        for col in df.columns:
-            if col.lower()=='geometry':
-                pass
-            elif matcher(tbl,f'{col}') == col:
-                column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
-                db.str.commit()
-                column_name_changer(tbl,col.upper(), col)
-                db.str.commit()
-            else:
-                column_name_changer(tbl,matcher(tbl,f'{col}'), col)
-                db.str.commit()
-
-                print('Column names fixed.')
-
-    except Exception as e:
-        db.str.rollback()
-        print(e)
-
-def name_check2():
-    # change column names
-    params = config()
-    conn = psycopg2.connect(**params)
-    cur = conn.cursor()
-
-    # specifying exceptions (complex cases/camelcase)
-    fname=os.path.join(path,which)
-    df = gpd.read_file(fname)
-    tbl = 'geoind'
-    try:
-        for col in df.columns:
-            if col.lower()=='geometry':
-                pass
-            elif matcher(tbl,f'{col}') == col:
-                column_name_changer(tbl,matcher(tbl,f'{col}'), col.upper())
-                conn.commit()
-                column_name_changer(tbl,col.upper(), col)
-                conn.commit()
-            else:
-                column_name_changer(tbl,matcher(tbl,f'{col}'), col)
-            # column_name_changer("geoind", col.capitalize(), col.lower())
-            # column_name_changer("geoind", col.upper(), col)
-                print('Column names fixed.')
-
-    except Exception as e:
-        conn.rollback()
-        print(e)
-    conn.commit()
-    #
-    #
-    # # changing name
-    # cur.execute("""
-    # ALTER TABLE gisdb.public.geoind
-    # RENAME TO "geoIndicators";""")
-    #
-    # # referencing header
-    # cur.execute("""
-    # ALTER TABLE gisdb.public."geoIndicators"
-    # ADD CONSTRAINT "geoInd_PrimaryKey_fkey"
-    # FOREIGN KEY ("PrimaryKey")
-    # REFERENCES "dataHeader" ("PrimaryKey");""")
-    # cur.execute("""
-    # UPDATE gisdb.public."geoIndicators"
-    # SET "DateLoadedInDb"=now()""" )
-    # conn.commit()
-    # print('geoIndicators table references header')
+            cur.execute("""
+            UPDATE gisdb.public."geoIndicators"
+            SET "DateLoadedInDb"=now()""")
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoIndicators"
+            DROP COLUMN IF EXISTS "id" """)
+            cur.execute("""
+            ALTER TABLE gisdb.public."geoIndicators"
+            ADD COLUMN "Public" BOOLEAN""")
+            db.str.commit()
+            print('geoIndicators table references header')

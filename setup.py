@@ -8,8 +8,8 @@ from tools import config
 
 from tools import TableList
 from tools import db
-
 import os
+import pandas as pd
 
 
 
@@ -78,23 +78,7 @@ issues:
 
 - check if columns in csv are the same in db
 """
-import os
-import pandas as pd
-# path = os.environ['DC_DATA']
-# for file in os.listdir(path):
-#     if file.find('header')!=-1 and os.path.splitext(file)[1]=='.csv':
-#         tmp = os.path.join(path,file)
-#         df = pd.read_csv(tmp, nrows=0, index_col=False)
-#         print(df)
-# import csv
-# path = os.environ['DC_DATA']
-# for file in os.listdir(path):
-#     if os.path.splitext(file)[1]=='.csv' and file.find('header')!=-1:
-#         with open(os.path.join(path,file),'r') as f:
-#             data = csv.reader(f)
-#             for row in data:
-#                 if ", ".join(row).find("2016")!=-1:
-#                     print(row)
+
 
 from tools import headeringest
 headeringest()
@@ -110,4 +94,4 @@ drop_indicator('geo', 0)
 import geopandas as gpd
 gdf = gpd.read_file(r"C:\Users\kbonefont\Desktop\data\geoInd.geojson")
 from tools import indicator_tables
-indicator_tables('spe')
+indicator_tables('ind')
